@@ -1,3 +1,4 @@
+import React from 'react';
 import { Sparkles, Compass, Settings, Radio } from 'lucide-react';
 import { useAstrology } from '../context/AstrologyContext';
 
@@ -18,143 +19,151 @@ export const Navbar: React.FC = () => {
   const vedicLagna = astrologyData?.siderealChart?.lagna;
 
   return (
-    <header className="relative z-30 w-full border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-2xl">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-        {/* Left: Brand Identity */}
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500/25 via-purple-500/20 to-indigo-500/25 border border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.25)] flex-shrink-0">
-            <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
-          </div>
-          <div className="flex items-center gap-2.5">
-            <span className="font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-purple-100 to-cyan-100 text-lg sm:text-xl font-serif whitespace-nowrap">
-              ASTRO ORACLE
-            </span>
-            <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/30 tracking-wider">
-              HYBRID AI
-            </span>
-          </div>
-        </div>
-
-        {/* Center: Clean Segmented Navigation Controller */}
-        <nav className="hidden md:flex items-center p-1 rounded-xl bg-slate-900/90 border border-slate-800/90 shadow-inner">
-          <button
-            onClick={() => setActiveView('chat')}
-            className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-2 ${
-              activeView === 'chat'
-                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/30'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            <span>Oracle Chat</span>
-          </button>
-
-          <button
-            onClick={() => setActiveView('charts')}
-            className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-2 ${
-              activeView === 'charts'
-                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/30'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-            }`}
-          >
-            <Compass className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Natal Placements</span>
-          </button>
-
-          <button
-            onClick={() => setActiveView('transits')}
-            className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-2 ${
-              activeView === 'transits'
-                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/30'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-            }`}
-          >
-            <Radio className="w-3.5 h-3.5 text-rose-400" />
-            <span>Live Transits</span>
-          </button>
-        </nav>
-
-        {/* Right: Unified Profile, Signs & Settings Pill */}
-        <div className="flex items-center gap-2.5 flex-shrink-0">
-          {/* Subtle Signs Pill (Desktop) */}
-          {tropicalSun && vedicMoon && (
-            <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/60 border border-slate-800 text-[11px] text-slate-300">
-              <span className="text-amber-300 font-medium">☉ {tropicalSun.sign}</span>
-              <span className="text-slate-700">•</span>
-              <span className="text-cyan-300 font-medium">☽ {vedicMoon.sign}</span>
-              {vedicLagna && (
-                <>
-                  <span className="text-slate-700">•</span>
-                  <span className="text-purple-300 font-medium">Asc {vedicLagna.sign}</span>
-                </>
-              )}
+    <>
+      {/* Top Header - Sleek on all screen sizes */}
+      <header className="relative z-30 w-full border-b border-slate-800/80 bg-slate-950/85 backdrop-blur-2xl flex-shrink-0">
+        <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
+          {/* Left: Brand Identity */}
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="relative flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-amber-500/25 via-purple-500/20 to-indigo-500/25 border border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.2)] flex-shrink-0">
+              <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
             </div>
-          )}
-
-          {/* Unified Settings / Profile Card */}
-          <button
-            onClick={() => setIsSettingsOpen(true)}
-            className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-200 hover:text-white transition shadow-sm group"
-            title="Configure Birth Details & Gemini API Key"
-          >
-            <div className="relative flex items-center justify-center">
-              {isCalculating ? (
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
-              ) : apiKey ? (
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]" />
-              ) : (
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
-              )}
-            </div>
-
-            <span className="text-xs font-semibold tracking-wide text-slate-200">
-              {profile.name}
-            </span>
-
-            {!apiKey && (
-              <span className="text-[10px] text-amber-300 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded font-medium">
-                Add Key
+            <div className="flex items-center gap-2">
+              <span className="font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-purple-100 to-cyan-100 text-base sm:text-lg lg:text-xl font-serif whitespace-nowrap">
+                ASTRO ORACLE
               </span>
+              <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/30 tracking-wider">
+                HYBRID AI
+              </span>
+            </div>
+          </div>
+
+          {/* Center: Tablet / Laptop / Desktop Segmented Controller */}
+          <nav className="hidden md:flex items-center p-1 rounded-xl bg-slate-900/90 border border-slate-800/90 shadow-inner">
+            <button
+              onClick={() => setActiveView('chat')}
+              className={`px-3.5 lg:px-4 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-1.5 lg:gap-2 ${
+                activeView === 'chat'
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/30'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              <span>Oracle Chat</span>
+            </button>
+
+            <button
+              onClick={() => setActiveView('charts')}
+              className={`px-3.5 lg:px-4 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-1.5 lg:gap-2 ${
+                activeView === 'charts'
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/30'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              }`}
+            >
+              <Compass className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Natal Placements</span>
+            </button>
+
+            <button
+              onClick={() => setActiveView('transits')}
+              className={`px-3.5 lg:px-4 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-1.5 lg:gap-2 ${
+                activeView === 'transits'
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/30'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              }`}
+            >
+              <Radio className="w-3.5 h-3.5 text-rose-400" />
+              <span>Live Transits</span>
+            </button>
+          </nav>
+
+          {/* Right: Integrated Profile & Settings Pill */}
+          <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0">
+            {/* Subtle Celestial Signs (Large Screens) */}
+            {tropicalSun && vedicMoon && (
+              <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/60 border border-slate-800 text-[11px] text-slate-300">
+                <span className="text-amber-300 font-medium">☉ {tropicalSun.sign}</span>
+                <span className="text-slate-700">•</span>
+                <span className="text-cyan-300 font-medium">☽ {vedicMoon.sign}</span>
+                {vedicLagna && (
+                  <>
+                    <span className="text-slate-700">•</span>
+                    <span className="text-purple-300 font-medium">Asc {vedicLagna.sign}</span>
+                  </>
+                )}
+              </div>
             )}
 
-            <Settings className="w-3.5 h-3.5 text-slate-400 group-hover:rotate-45 group-hover:text-slate-200 transition-transform" />
-          </button>
-        </div>
-      </div>
+            {/* Profile & Settings Trigger */}
+            <button
+              onClick={() => setIsSettingsOpen(true)}
+              className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-200 hover:text-white transition shadow-sm group"
+              title="Configure Birth Details & Gemini API Key"
+            >
+              <div className="relative flex items-center justify-center">
+                {isCalculating ? (
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
+                ) : apiKey ? (
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]" />
+                ) : (
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
+                )}
+              </div>
 
-      {/* Mobile Bottom Navigation Strip */}
-      <div className="md:hidden flex items-center justify-around border-t border-slate-800/80 bg-slate-950/90 px-3 py-2">
+              <span className="text-xs font-semibold tracking-wide text-slate-200 max-w-[90px] sm:max-w-[140px] truncate">
+                {profile.name}
+              </span>
+
+              {!apiKey && (
+                <span className="text-[10px] text-amber-300 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded font-medium hidden xs:inline">
+                  Add Key
+                </span>
+              )}
+
+              <Settings className="w-3.5 h-3.5 text-slate-400 group-hover:rotate-45 group-hover:text-slate-200 transition-transform flex-shrink-0" />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Mobile-Only Bottom Navigation Dock (App-Like Ergonomics) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-2xl border-t border-slate-800/90 px-3 py-2 flex items-center justify-around shadow-[0_-5px_20px_rgba(0,0,0,0.6)]">
         <button
           onClick={() => setActiveView('chat')}
-          className={`flex-1 py-1.5 text-center text-xs font-medium rounded-lg transition ${
+          className={`flex-1 py-1.5 px-2 flex flex-col items-center justify-center gap-1 rounded-xl transition ${
             activeView === 'chat'
-              ? 'bg-purple-600/30 text-purple-200 border border-purple-500/40'
-              : 'text-slate-400'
+              ? 'text-purple-300 bg-purple-600/15 border border-purple-500/30'
+              : 'text-slate-400 hover:text-slate-200'
           }`}
         >
-          Oracle Chat
+          <Sparkles className="w-4 h-4" />
+          <span className="text-[10px] font-medium tracking-tight">Oracle Chat</span>
         </button>
+
         <button
           onClick={() => setActiveView('charts')}
-          className={`flex-1 py-1.5 text-center text-xs font-medium rounded-lg transition ${
+          className={`flex-1 py-1.5 px-2 flex flex-col items-center justify-center gap-1 rounded-xl transition ${
             activeView === 'charts'
-              ? 'bg-purple-600/30 text-purple-200 border border-purple-500/40'
-              : 'text-slate-400'
+              ? 'text-cyan-300 bg-cyan-600/15 border border-cyan-500/30'
+              : 'text-slate-400 hover:text-slate-200'
           }`}
         >
-          Natal Placements
+          <Compass className="w-4 h-4" />
+          <span className="text-[10px] font-medium tracking-tight">Placements</span>
         </button>
+
         <button
           onClick={() => setActiveView('transits')}
-          className={`flex-1 py-1.5 text-center text-xs font-medium rounded-lg transition ${
+          className={`flex-1 py-1.5 px-2 flex flex-col items-center justify-center gap-1 rounded-xl transition ${
             activeView === 'transits'
-              ? 'bg-purple-600/30 text-purple-200 border border-purple-500/40'
-              : 'text-slate-400'
+              ? 'text-rose-300 bg-rose-600/15 border border-rose-500/30'
+              : 'text-slate-400 hover:text-slate-200'
           }`}
         >
-          Live Transits
+          <Radio className="w-4 h-4" />
+          <span className="text-[10px] font-medium tracking-tight">Transits</span>
         </button>
-      </div>
-    </header>
+      </nav>
+    </>
   );
 };

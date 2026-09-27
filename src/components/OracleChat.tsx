@@ -80,34 +80,34 @@ export const OracleChat: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full max-w-4xl mx-auto px-3 sm:px-6 py-2 sm:py-3 overflow-hidden">
+    <div className="flex flex-col h-full max-w-4xl mx-auto px-3 sm:px-6 pt-2 pb-20 md:pb-3 overflow-hidden">
       {/* Messages Scroll Area */}
-      <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-1 no-scrollbar">
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-3.5 pr-1 no-scrollbar">
         {chatHistory.length === 0 && (
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center justify-center min-h-full py-2 text-center space-y-3.5 max-w-xl mx-auto"
+            className="flex flex-col items-center justify-center min-h-full py-2 text-center space-y-3 max-w-xl mx-auto"
           >
-            <div className="relative flex items-center justify-center w-13 h-13 rounded-2xl bg-gradient-to-tr from-amber-500/20 via-purple-500/20 to-indigo-500/20 border border-amber-500/30 shadow-[0_0_25px_rgba(245,158,11,0.2)]">
-              <Sparkles className="w-6 h-6 text-amber-300 animate-pulse" />
+            <div className="relative flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500/20 via-purple-500/20 to-indigo-500/20 border border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.2)]">
+              <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
             </div>
 
             <div className="space-y-1">
-              <h2 className="text-lg sm:text-xl font-bold font-serif text-white tracking-wide">
+              <h2 className="text-base sm:text-xl font-bold font-serif text-white tracking-wide">
                 Welcome to the Astro Oracle
               </h2>
-              <p className="text-xs text-slate-400 leading-relaxed max-w-md mx-auto">
+              <p className="text-xs text-slate-400 leading-relaxed max-w-md mx-auto px-2">
                 Consult the celestial intelligence for <span className="text-purple-300 font-medium">{profile.name}</span>.
                 Fusing psychological depth of <span className="text-purple-300">Western Tropical</span> with event timing & remedies of <span className="text-amber-300">Vedic Sidereal (Lahiri)</span>.
               </p>
             </div>
 
             {!apiKey && (
-              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs flex items-center justify-between gap-3 w-full max-w-md">
+              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs flex items-center justify-between gap-2.5 w-full max-w-md">
                 <div className="flex items-center gap-2 text-left">
                   <AlertCircle className="w-4 h-4 flex-shrink-0 text-amber-400" />
-                  <span>Add your Gemini API key to unlock personalized readings.</span>
+                  <span className="text-[11px] sm:text-xs">Add your Gemini API key to unlock readings.</span>
                 </div>
                 <button
                   onClick={() => setIsSettingsOpen(true)}
@@ -119,8 +119,8 @@ export const OracleChat: React.FC = () => {
             )}
 
             {/* Suggested Consultations Grid */}
-            <div className="w-full pt-1">
-              <span className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold block mb-2">
+            <div className="w-full pt-1 px-1">
+              <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-500 font-semibold block mb-2">
                 Suggested Inquiries
               </span>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-left">
@@ -130,7 +130,7 @@ export const OracleChat: React.FC = () => {
                     <button
                       key={idx}
                       onClick={() => handleChipClick(chip.text)}
-                      className="p-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800/90 border border-slate-800/90 hover:border-purple-500/40 text-slate-300 hover:text-white transition flex items-center gap-2 text-xs group shadow-sm"
+                      className="p-2 sm:p-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800/90 border border-slate-800/90 hover:border-purple-500/40 text-slate-300 hover:text-white transition flex items-center gap-2 text-xs group shadow-sm"
                     >
                       <Icon className="w-3.5 h-3.5 text-purple-400 group-hover:text-amber-300 transition-colors flex-shrink-0" />
                       <span className="truncate">{chip.text}</span>
@@ -152,16 +152,16 @@ export const OracleChat: React.FC = () => {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2 }}
-                className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}
+                className={`flex gap-2 sm:gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}
               >
                 {!isUser && (
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 border border-purple-400/30 flex items-center justify-center flex-shrink-0 mt-1 shadow-md shadow-purple-900/30">
-                    <Sparkles className="w-4 h-4 text-amber-300" />
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 border border-purple-400/30 flex items-center justify-center flex-shrink-0 mt-1 shadow-md shadow-purple-900/30">
+                    <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-300" />
                   </div>
                 )}
 
                 <div
-                  className={`relative group max-w-[85%] sm:max-w-[78%] rounded-2xl p-4 text-sm leading-relaxed ${
+                  className={`relative group max-w-[88%] sm:max-w-[78%] rounded-2xl p-3 sm:p-4 text-xs sm:text-sm leading-relaxed overflow-hidden ${
                     isUser
                       ? 'bg-gradient-to-r from-purple-700/80 to-indigo-700/80 text-white rounded-tr-sm shadow-lg shadow-purple-950/40 border border-purple-500/20'
                       : 'bg-slate-900/90 text-slate-100 rounded-tl-sm border border-slate-800/90 shadow-xl'
@@ -170,7 +170,7 @@ export const OracleChat: React.FC = () => {
                   {isUser ? (
                     <p className="whitespace-pre-wrap">{msg.text}</p>
                   ) : (
-                    <div className="prose prose-invert prose-sm max-w-none prose-p:my-2 prose-headings:text-amber-300 prose-headings:font-serif prose-headings:font-semibold prose-strong:text-purple-200 prose-ul:my-2 prose-li:my-0.5 prose-blockquote:border-l-amber-500">
+                    <div className="prose prose-invert prose-xs sm:prose-sm max-w-none prose-p:my-2 prose-headings:text-amber-300 prose-headings:font-serif prose-headings:font-semibold prose-strong:text-purple-200 prose-ul:my-2 prose-li:my-0.5 prose-blockquote:border-l-amber-500 overflow-x-auto">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {msg.text}
                       </ReactMarkdown>
@@ -188,7 +188,7 @@ export const OracleChat: React.FC = () => {
                     {!isUser && (
                       <button
                         onClick={() => handleCopy(msg.id, msg.text)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-slate-400 hover:text-white"
+                        className="opacity-0 group-hover:opacity-100 sm:opacity-0 focus:opacity-100 transition-opacity p-1 text-slate-400 hover:text-white"
                         title="Copy text"
                       >
                         {copiedId === msg.id ? (
@@ -202,8 +202,8 @@ export const OracleChat: React.FC = () => {
                 </div>
 
                 {isUser && (
-                  <div className="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center flex-shrink-0 mt-1">
-                    <User className="w-4 h-4 text-slate-300" />
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center flex-shrink-0 mt-1">
+                    <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-300" />
                   </div>
                 )}
               </motion.div>
@@ -216,15 +216,15 @@ export const OracleChat: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex gap-3 justify-start"
+            className="flex gap-2 sm:gap-3 justify-start"
           >
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 border border-purple-400/30 flex items-center justify-center flex-shrink-0 mt-1 shadow-md shadow-purple-900/30">
-              <Sparkles className="w-4 h-4 text-amber-300 animate-spin" />
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 border border-purple-400/30 flex items-center justify-center flex-shrink-0 mt-1 shadow-md shadow-purple-900/30">
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-300 animate-spin" />
             </div>
 
-            <div className="max-w-[85%] sm:max-w-[78%] rounded-2xl rounded-tl-sm p-4 text-sm leading-relaxed bg-slate-900/90 text-slate-100 border border-slate-800/90 shadow-xl">
+            <div className="max-w-[88%] sm:max-w-[78%] rounded-2xl rounded-tl-sm p-3 sm:p-4 text-xs sm:text-sm leading-relaxed bg-slate-900/90 text-slate-100 border border-slate-800/90 shadow-xl overflow-hidden">
               {streamingMessage ? (
-                <div className="prose prose-invert prose-sm max-w-none prose-p:my-2 prose-headings:text-amber-300 prose-headings:font-serif prose-headings:font-semibold prose-strong:text-purple-200">
+                <div className="prose prose-invert prose-xs sm:prose-sm max-w-none prose-p:my-2 prose-headings:text-amber-300 prose-headings:font-serif prose-headings:font-semibold prose-strong:text-purple-200 overflow-x-auto">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
                     {streamingMessage}
                   </ReactMarkdown>
@@ -233,10 +233,10 @@ export const OracleChat: React.FC = () => {
 
               {/* Streaming typing indicator dots */}
               <div className="flex items-center gap-1.5 py-1 text-slate-400 mt-2">
-                <span className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                <span className="w-2 h-2 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '300ms' }} />
-                <span className="text-xs text-slate-400 ml-1.5 font-serif italic">
+                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                <span className="text-[11px] sm:text-xs text-slate-400 ml-1.5 font-serif italic truncate">
                   Aligning Tropical & Sidereal Lahiri matrices...
                 </span>
               </div>
@@ -251,14 +251,14 @@ export const OracleChat: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             className="p-3 rounded-xl bg-rose-950/60 border border-rose-800/80 text-rose-200 text-xs flex items-center justify-between gap-3"
           >
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />
-              <span>{error}</span>
+              <span className="truncate">{error}</span>
             </div>
             {!apiKey && (
               <button
                 onClick={() => setIsSettingsOpen(true)}
-                className="px-2.5 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 font-medium text-xs whitespace-nowrap"
+                className="px-2.5 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 font-medium text-xs whitespace-nowrap flex-shrink-0"
               >
                 Configure Key
               </button>
@@ -283,13 +283,13 @@ export const OracleChat: React.FC = () => {
       )}
 
       {/* Quick Suggestion Chips above input */}
-      <div className="pt-1.5 pb-1 overflow-x-auto flex items-center gap-2 no-scrollbar">
+      <div className="pt-1.5 pb-1 overflow-x-auto flex items-center gap-2 no-scrollbar touch-pan-x">
         {SUGGESTION_CHIPS.map((chip, idx) => (
           <button
             key={idx}
             onClick={() => handleChipClick(chip.text)}
             disabled={isStreaming}
-            className="px-3 py-1 rounded-full text-xs bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-purple-500/40 text-slate-300 hover:text-white transition whitespace-nowrap flex-shrink-0 disabled:opacity-50"
+            className="px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-purple-500/40 text-slate-300 hover:text-white transition whitespace-nowrap flex-shrink-0 disabled:opacity-50"
           >
             {chip.text}
           </button>
@@ -300,7 +300,7 @@ export const OracleChat: React.FC = () => {
       <div className="pt-1 pb-1">
         <form
           onSubmit={handleSend}
-          className="relative flex items-center bg-slate-900/90 border border-slate-800 focus-within:border-purple-500/70 rounded-2xl p-1.5 shadow-2xl transition"
+          className="relative flex items-center bg-slate-900/95 border border-slate-800 focus-within:border-purple-500/70 rounded-2xl p-1 sm:p-1.5 shadow-2xl transition"
         >
           <textarea
             ref={inputRef}
@@ -310,35 +310,35 @@ export const OracleChat: React.FC = () => {
             onKeyDown={handleKeyDown}
             placeholder={
               apiKey
-                ? `Ask about timing, marriage, career, personality or remedies...`
-                : `Set your Gemini API key in Settings to activate the Oracle...`
+                ? `Ask about timing, marriage, career, remedies...`
+                : `Set your Gemini API key in Settings...`
             }
-            className="flex-1 bg-transparent px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none resize-none max-h-24"
+            className="flex-1 bg-transparent px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none resize-none max-h-24"
           />
 
-          <div className="flex items-center gap-1.5 pr-1">
+          <div className="flex items-center gap-1 pr-1 flex-shrink-0">
             {!apiKey && (
               <button
                 type="button"
                 onClick={() => setIsSettingsOpen(true)}
-                className="p-2 text-amber-400 hover:text-amber-300 hover:bg-slate-800 rounded-xl transition"
+                className="p-1.5 sm:p-2 text-amber-400 hover:text-amber-300 hover:bg-slate-800 rounded-xl transition"
                 title="Configure Gemini API Key"
               >
-                <KeyRound className="w-4 h-4" />
+                <KeyRound className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
             )}
 
             <button
               type="submit"
               disabled={!input.trim() || isStreaming}
-              className="p-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white disabled:opacity-40 disabled:hover:from-purple-600 disabled:hover:to-indigo-600 transition shadow-md shadow-purple-600/30 flex items-center justify-center"
+              className="p-2 sm:p-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white disabled:opacity-40 disabled:hover:from-purple-600 disabled:hover:to-indigo-600 transition shadow-md shadow-purple-600/30 flex items-center justify-center"
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
           </div>
         </form>
-        <p className="text-[10px] text-center text-slate-500 mt-1">
-          SwissEph WASM Engine • Sidereal Lahiri & Tropical Placidus Dual Architecture
+        <p className="text-[9px] sm:text-[10px] text-center text-slate-500 mt-1">
+          SwissEph WASM • Sidereal Lahiri & Tropical Dual Engine
         </p>
       </div>
     </div>
