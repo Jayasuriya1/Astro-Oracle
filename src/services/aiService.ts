@@ -101,33 +101,25 @@ class AIService {
     return this.client;
   }
 
-  // Test API key validity
+  // Test API key validity directly against the lightweight free-tier model
   async testApiKey(key: string): Promise<boolean> {
-    const testModels = ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.5-flash'];
-    let lastError: any = null;
-
-    for (const model of testModels) {
-      try {
-        const testClient = new GoogleGenAI({ apiKey: key });
-        const response = await testClient.models.generateContent({
-          model,
-          contents: 'Ping: respond with "OK"'
-        });
-        if (response.text) return true;
-      } catch (e: any) {
-        lastError = e;
-        const msg = (e?.message || '').toLowerCase();
-        if (msg.includes('api_key_invalid') || msg.includes('api key not valid') || msg.includes('permission_denied')) {
-          throw new Error('Invalid Gemini API key. Please check your key in Settings.');
-        }
-        // Try next candidate
-        continue;
+    try {
+      const testClient = new GoogleGenAI({ apiKey: key });
+      const response = await testClient.models.generateContent({
+        model: 'gemini-3.5-flash-lite',
+        contents: 'Ping: respond with "OK"'
+      });
+      return !!response.text;
+    } catch (e: any) {
+      const msg = (e?.message || '').toLowerCase();
+      if (msg.includes('api_key_invalid') || msg.includes('api key not valid') || msg.includes('permission_denied') || msg.includes('unauthenticated')) {
+        throw new Error('Invalid Gemini API key. Please check your key in Settings.');
       }
+      throw new Error(e?.message || 'Unable to connect to Gemini API. Please check your network and API key.');
     }
-    throw new Error(lastError?.message || 'Invalid Gemini API key or network error');
   }
 
-  // Stream chat response with sliding window and automatic fallback across valid Gemini 3 endpoints
+  // Stream chat response using the lightweight, free-tier optimized Gemini model (gemini-3.5-flash-lite)
   async streamChat(
     history: ChatMessage[],
     userMessage: string,
@@ -164,75 +156,53 @@ class AIService {
       parts: [{ text: userMessage }]
     });
 
-    // Validated Gemini 3 family endpoints in order of preference
-    const modelsToTry = [
-      'gemini-3.8-flash',
-      'gemini-3.7-flash',
-      'gemini-3.5-flash',
-      'gemini-3.5-flash-lite'
-    ];
-    let lastError: any = null;
+    // Single direct call to safe free-tier model — no fallback loop
+    const model = 'gemini-3.5-flash-lite';
+    let fullResponse = '';
 
-    for (const model of modelsToTry) {
-      // Allow up to 2 attempts per model if 503 high demand occurs
-      for (let attempt = 0; attempt < 2; attempt++) {
-        let fullResponse = '';
-        try {
-          const stream = await client.models.generateContentStream({
-            model,
-            contents,
-            config: {
-              systemInstruction,
-              temperature: 0.7,
-              topP: 0.95
-            }
-          });
+    try {
+      const stream = await client.models.generateContentStream({
+        model,
+        contents,
+        config: {
+          systemInstruction,
+          temperature: 0.7,
+          topP: 0.95
+        }
+      });
 
-          for await (const chunk of stream) {
-            const text = chunk.text;
-            if (text) {
-              fullResponse += text;
-              onChunk(fullResponse);
-            }
-          }
-
-          if (fullResponse) {
-            return fullResponse;
-          }
-        } catch (err: any) {
-          lastError = err;
-          const msg = (err?.message || '').toLowerCase();
-          const isAuthError =
-            msg.includes('api_key_invalid') ||
-            msg.includes('api key not valid') ||
-            msg.includes('permission_denied') ||
-            msg.includes('unauthenticated');
-
-          if (isAuthError) {
-            throw new Error('Invalid Gemini API Key. Please update your key in Settings.');
-          }
-
-          const is503HighDemand =
-            msg.includes('503') ||
-            msg.includes('high demand') ||
-            msg.includes('unavailable') ||
-            msg.includes('overloaded');
-
-          // If 503 on first attempt, wait 1.2s and retry once
-          if (is503HighDemand && attempt === 0) {
-            console.warn(`Model ${model} experienced temporary 503 high demand. Retrying in 1.2s...`);
-            await new Promise((resolve) => setTimeout(resolve, 1200));
-            continue;
-          }
-
-          // If 404 or repeated 503, move to the next model in the candidate chain
-          console.warn(`Model ${model} attempt ${attempt + 1} failed (${err.message}). Trying next candidate model...`);
-          break; // Break inner retry loop to try next model in modelsToTry
+      for await (const chunk of stream) {
+        const text = chunk.text;
+        if (text) {
+          fullResponse += text;
+          onChunk(fullResponse);
         }
       }
-    }
 
-    throw lastError || new Error('All astrological intelligence models are currently experiencing high demand. Please try again shortly.');
+      if (!fullResponse) {
+        throw new Error('Received empty response from the astrological oracle.');
+      }
+
+      return fullResponse;
+    } catch (err: any) {
+      const msg = (err?.message || '').toLowerCase();
+      if (
+        msg.includes('api_key_invalid') ||
+        msg.includes('api key not valid') ||
+        msg.includes('permission_denied') ||
+        msg.includes('unauthenticated')
+      ) {
+        throw new Error('Invalid Gemini API Key. Please update your key in Settings.');
+      }
+      if (msg.includes('resource_exhausted') || msg.includes('429') || msg.includes('quota')) {
+        throw new Error('Gemini free-tier quota/rate limit reached. Please wait a moment and try again.');
+      }
+      if (msg.includes('503') || msg.includes('high demand') || msg.includes('unavailable') || msg.includes('overloaded')) {
+        throw new Error('Gemini service is temporarily experiencing high demand. Please try again in a few moments.');
+      }
+
+      throw new Error(err?.message || 'Error communicating with Gemini API.');
+    }
   }
 }
 
