@@ -6,7 +6,10 @@ import type {
   VedicChart,
   PlanetPosition,
   HouseCusp,
-  Aspect
+  Aspect,
+  Mahadasha,
+  Antardasha,
+  DashaReport
 } from '../types/astrology';
 import { storageService } from './storageService';
 
@@ -134,6 +137,108 @@ function calculateWesternAspects(planets: PlanetPosition[]): Aspect[] {
   }
 
   return aspects;
+}
+
+// Standard 120-year Vimshottari Dasha planetary lords & durations
+export const VIMSHOTTARI_LORDS: Array<{ lord: string; years: number }> = [
+  { lord: 'Ketu', years: 7 },
+  { lord: 'Venus', years: 20 },
+  { lord: 'Sun', years: 6 },
+  { lord: 'Moon', years: 10 },
+  { lord: 'Mars', years: 7 },
+  { lord: 'Rahu', years: 18 },
+  { lord: 'Jupiter', years: 16 },
+  { lord: 'Saturn', years: 19 },
+  { lord: 'Mercury', years: 17 }
+];
+
+// Vimshottari Dasha calculation based on Moon's Sidereal Nakshatra position at birth
+export function calculateVimshottariDasha(
+  moonLongitude: number,
+  birthDate: Date
+): DashaReport {
+  const normLon = ((moonLongitude % 360) + 360) % 360;
+  const nakshatraSpan = 360 / 27; // 13.333333333333334 degrees = 13°20'
+  const nIndex = Math.floor(normLon / nakshatraSpan) % 27;
+  const pada = Math.floor((normLon % nakshatraSpan) / (nakshatraSpan / 4)) + 1;
+  const nakshatra = NAKSHATRAS[nIndex];
+
+  // Starting lord based on nakshatra index (0 = Ketu, 1 = Venus, etc.)
+  const startLordIndex = nIndex % 9;
+  const passedInNakshatra = normLon % nakshatraSpan;
+  const remainingFraction = (nakshatraSpan - passedInNakshatra) / nakshatraSpan;
+
+  const startLordTotalYears = VIMSHOTTARI_LORDS[startLordIndex].years;
+  const balanceYears = remainingFraction * startLordTotalYears;
+  const elapsedYears = startLordTotalYears - balanceYears;
+
+  const msPerYear = 365.2425 * 24 * 3600 * 1000;
+  const birthTimeMs = birthDate.getTime();
+  const now = Date.now();
+
+  const timeline: Mahadasha[] = [];
+  let currentCursorMs = birthTimeMs - elapsedYears * msPerYear;
+
+  for (let i = 0; i < 9; i++) {
+    const lordIdx = (startLordIndex + i) % 9;
+    const lordInfo = VIMSHOTTARI_LORDS[lordIdx];
+    const durationMs = lordInfo.years * msPerYear;
+    const startMs = currentCursorMs;
+    const endMs = startMs + durationMs;
+    currentCursorMs = endMs;
+
+    const isCurrent = now >= startMs && now < endMs;
+    let percentagePassed = 0;
+    if (now >= endMs) {
+      percentagePassed = 100;
+    } else if (now > startMs) {
+      percentagePassed = Math.min(
+        100,
+        Math.max(0, Math.round(((now - startMs) / durationMs) * 100))
+      );
+    }
+
+    // Calculate 9 Antardashas within this Mahadasha
+    const antardashas: Antardasha[] = [];
+    let subCursorMs = startMs;
+    for (let j = 0; j < 9; j++) {
+      const subLordIdx = (lordIdx + j) % 9;
+      const subLordInfo = VIMSHOTTARI_LORDS[subLordIdx];
+      // Classical formula: (Mahadasha Years * Antardasha Years) / 120
+      const subYears = (lordInfo.years * subLordInfo.years) / 120;
+      const subDurationMs = subYears * msPerYear;
+      const subStartMs = subCursorMs;
+      const subEndMs = subStartMs + subDurationMs;
+      subCursorMs = subEndMs;
+
+      antardashas.push({
+        lord: subLordInfo.lord,
+        startDate: new Date(subStartMs).toISOString().split('T')[0],
+        endDate: new Date(subEndMs).toISOString().split('T')[0],
+        isCurrent: now >= subStartMs && now < subEndMs
+      });
+    }
+
+    timeline.push({
+      lord: lordInfo.lord,
+      totalYears: lordInfo.years,
+      startDate: new Date(startMs).toISOString().split('T')[0],
+      endDate: new Date(endMs).toISOString().split('T')[0],
+      isCurrent,
+      percentagePassed,
+      antardashas
+    });
+  }
+
+  const currentMahadasha = timeline.find((m) => m.isCurrent) || null;
+
+  return {
+    currentMahadasha,
+    timeline,
+    nakshatra: nakshatra.name,
+    pada: Math.min(pada, 4),
+    balanceYears: Math.round(balanceYears * 100) / 100
+  };
 }
 
 class AstrologyEngineService {
@@ -394,6 +499,15 @@ class AstrologyEngineService {
       nakshatraLord: ketuNakshatra.nakshatraLord
     });
 
+    // Calculate birth date object for Vimshottari Dasha
+    const [bYear, bMonth, bDay] = profile.birthDate.split('-').map(Number);
+    const [bHour, bMin] = profile.birthTime.split(':').map(Number);
+    const birthDateObj = new Date(bYear, (bMonth || 1) - 1, bDay || 1, bHour || 12, bMin || 0);
+
+    const siderealMoon = siderealPlanets.find((p) => p.name === 'Moon');
+    const moonSiderealLon = siderealMoon ? siderealMoon.longitude : 0;
+    const dashaReport = calculateVimshottariDasha(moonSiderealLon, birthDateObj);
+
     const vedicChart: VedicChart = {
       system: 'Sidereal (Vedic / Lahiri)',
       houseSystem: 'Whole Sign / Equal',
@@ -408,7 +522,8 @@ class AstrologyEngineService {
         pada: lagnaNakshatra.nakshatraPada
       },
       planets: siderealPlanets,
-      houses: vedicHouses
+      houses: vedicHouses,
+      dashaReport
     };
 
     // 4. CURRENT DAY TRANSITS FOR BOTH SYSTEMS

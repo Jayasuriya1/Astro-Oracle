@@ -81,6 +81,31 @@ export interface WesternChart {
   aspects: Aspect[];
 }
 
+export interface Antardasha {
+  lord: string;
+  startDate: string;
+  endDate: string;
+  isCurrent: boolean;
+}
+
+export interface Mahadasha {
+  lord: string;
+  totalYears: number;
+  startDate: string; // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD
+  isCurrent: boolean;
+  percentagePassed?: number;
+  antardashas?: Antardasha[];
+}
+
+export interface DashaReport {
+  currentMahadasha: Mahadasha | null;
+  timeline: Mahadasha[];
+  nakshatra: string;
+  pada: number;
+  balanceYears: number;
+}
+
 export interface VedicChart {
   system: 'Sidereal (Vedic / Lahiri)';
   houseSystem: 'Whole Sign / Equal';
@@ -97,6 +122,7 @@ export interface VedicChart {
   planets: PlanetPosition[];
   houses: HouseCusp[];
   navamshaSummary?: Record<string, string>;
+  dashaReport?: DashaReport;
 }
 
 export interface TransitData {

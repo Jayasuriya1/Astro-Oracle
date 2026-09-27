@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Compass, RefreshCw, Layers, ArrowRightLeft } from 'lucide-react';
 import { useAstrology } from '../context/AstrologyContext';
+import { SouthIndianChart } from './SouthIndianChart';
+import { VimshottariDashaTable } from './VimshottariDashaTable';
 
 const PLANET_SYMBOLS: Record<string, string> = {
   Sun: '☉',
@@ -119,43 +121,81 @@ export const ChartViewer: React.FC<{ defaultSubTab?: 'western' | 'vedic' | 'tran
           animate={{ opacity: 1, y: 0 }}
           className="space-y-4 sm:space-y-6"
         >
-          {/* Key Vedic Milestones Card */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-            <div className="p-3.5 sm:p-4 rounded-xl bg-slate-900/80 border border-slate-800">
-              <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400">Lagna (Ascendant)</span>
-              <p className="text-base sm:text-lg font-bold text-amber-300 font-serif mt-0.5">
-                {siderealChart.lagna.sign}
-              </p>
-              <p className="text-[11px] sm:text-xs text-slate-400">
-                {siderealChart.lagna.formattedDegree} • {siderealChart.lagna.nakshatra} (Pada {siderealChart.lagna.pada})
-              </p>
+          {/* Visual South Indian Chart Diagram & Key Milestones */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+            {/* Visual SVG Chart (Left Column) */}
+            <div className="lg:col-span-5 flex flex-col items-center">
+              <SouthIndianChart
+                planets={siderealChart.planets}
+                lagna={siderealChart.lagna}
+                nativeName={profile.name}
+                chartTitle="RASI (D1)"
+              />
             </div>
 
-            <div className="p-3.5 sm:p-4 rounded-xl bg-slate-900/80 border border-slate-800">
-              <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400">Chandra Rasi (Moon Sign)</span>
-              {(() => {
-                const moon = siderealChart.planets.find(p => p.name === 'Moon');
-                return (
-                  <>
-                    <p className="text-base sm:text-lg font-bold text-cyan-300 font-serif mt-0.5">
-                      {moon?.sign || 'N/A'}
-                    </p>
-                    <p className="text-[11px] sm:text-xs text-slate-400">
-                      {moon?.formattedDegree} • {moon?.nakshatra} (Pada {moon?.nakshatraPada}) • Lord: {moon?.nakshatraLord}
-                    </p>
-                  </>
-                );
-              })()}
-            </div>
+            {/* Key Vedic Milestones & Snapshot (Right Column) */}
+            <div className="lg:col-span-7 space-y-3.5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+                  <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400">Lagna (Ascendant)</span>
+                  <p className="text-base sm:text-lg font-bold text-amber-300 font-serif mt-0.5">
+                    {siderealChart.lagna.sign}
+                  </p>
+                  <p className="text-[11px] sm:text-xs text-slate-400">
+                    {siderealChart.lagna.formattedDegree} • {siderealChart.lagna.nakshatra} (Pada {siderealChart.lagna.pada})
+                  </p>
+                </div>
 
-            <div className="p-3.5 sm:p-4 rounded-xl bg-slate-900/80 border border-slate-800 sm:col-span-1">
-              <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400">Ayanamsa</span>
-              <p className="text-base sm:text-lg font-bold text-purple-300 font-serif mt-0.5">
-                Chitra Paksha (Lahiri)
-              </p>
-              <p className="text-[11px] sm:text-xs text-slate-400">
-                Offset: {siderealChart.ayanamsaValue.toFixed(4)}° • Whole Sign Houses
-              </p>
+                <div className="p-3.5 sm:p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+                  <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400">Chandra Rasi (Moon Sign)</span>
+                  {(() => {
+                    const moon = siderealChart.planets.find(p => p.name === 'Moon');
+                    return (
+                      <>
+                        <p className="text-base sm:text-lg font-bold text-cyan-300 font-serif mt-0.5">
+                          {moon?.sign || 'N/A'}
+                        </p>
+                        <p className="text-[11px] sm:text-xs text-slate-400">
+                          {moon?.formattedDegree} • {moon?.nakshatra} (Pada {moon?.nakshatraPada})
+                        </p>
+                      </>
+                    );
+                  })()}
+                </div>
+
+                <div className="p-3.5 sm:p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+                  <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400">Ayanamsa</span>
+                  <p className="text-base sm:text-lg font-bold text-purple-300 font-serif mt-0.5">
+                    Chitra Paksha (Lahiri)
+                  </p>
+                  <p className="text-[11px] sm:text-xs text-slate-400">
+                    Offset: {siderealChart.ayanamsaValue.toFixed(4)}° • Whole Sign
+                  </p>
+                </div>
+              </div>
+
+              {/* Dasha Quick Snapshot Card if available */}
+              {siderealChart.dashaReport?.currentMahadasha && (
+                <div className="p-3.5 sm:p-4 rounded-xl bg-purple-950/30 border border-purple-500/20 text-xs text-slate-300 flex items-center justify-between gap-3">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-emerald-400 tracking-wider">
+                      ● Active Vimshottari Period
+                    </span>
+                    <p className="text-sm font-semibold text-white font-serif mt-0.5">
+                      {siderealChart.dashaReport.currentMahadasha.lord} Mahadasha ({siderealChart.dashaReport.currentMahadasha.totalYears}y)
+                    </p>
+                    <p className="text-[11px] text-slate-400">
+                      {siderealChart.dashaReport.currentMahadasha.startDate} to {siderealChart.dashaReport.currentMahadasha.endDate}
+                    </p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <span className="text-amber-300 font-bold font-mono text-sm">
+                      {siderealChart.dashaReport.currentMahadasha.percentagePassed}%
+                    </span>
+                    <p className="text-[10px] text-slate-500">elapsed</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -234,6 +274,11 @@ export const ChartViewer: React.FC<{ defaultSubTab?: 'western' | 'vedic' | 'tran
               </table>
             </div>
           </div>
+
+          {/* Vimshottari Dasha Timeline Table */}
+          {siderealChart.dashaReport && (
+            <VimshottariDashaTable dashaReport={siderealChart.dashaReport} />
+          )}
         </motion.div>
       )}
 
