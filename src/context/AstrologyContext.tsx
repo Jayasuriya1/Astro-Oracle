@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import type { UserProfile, CalculatedAstrologyData, ChatMessage } from '../types/astrology';
+import type { UserProfile, CalculatedAstrologyData, ChatMessage, BackupPackage } from '../types/astrology';
 import { storageService, defaultProfile } from '../services/storageService';
 import { astrologyEngine } from '../services/astrologyEngine';
 import { aiService } from '../services/aiService';
@@ -41,6 +41,8 @@ interface AstrologyContextType {
   clearChat: (targetProfileId?: string) => Promise<void>;
   clearChatForProfile: (profileId: string) => Promise<void>;
   recalculate: () => Promise<void>;
+  exportBackupData: () => Promise<BackupPackage>;
+  importBackupData: (backupPackage: BackupPackage) => Promise<void>;
   clearError: () => void;
 }
 
@@ -397,6 +399,51 @@ export const AstrologyProvider: React.FC<{ children: ReactNode }> = ({ children 
     }
   }, [apiKey, astrologyData, chatHistory, isStreaming, language, profile]);
 
+  const exportBackupData = useCallback(async (): Promise<BackupPackage> => {
+    return await storageService.exportBackup();
+  }, []);
+
+  const importBackupData = useCallback(async (backupPackage: BackupPackage): Promise<void> => {
+    try {
+      setIsCalculating(true);
+      setError(null);
+      await storageService.importBackup(backupPackage);
+
+      // Refresh state with newly imported data
+      const [newProfiles, newActiveId, newApiKey] = await Promise.all([
+        storageService.getProfiles(),
+        storageService.getActiveProfileId(),
+        storageService.getApiKey()
+      ]);
+
+      setProfiles(newProfiles);
+      setApiKey(newApiKey);
+
+      const current = newProfiles.find(p => p.id === newActiveId) || newProfiles[0] || defaultProfile;
+      setProfile(current);
+
+      const [currentChat, currentChart] = await Promise.all([
+        storageService.getChatHistory(current.id),
+        storageService.getAstrologyData(current.id)
+      ]);
+
+      setChatHistory(currentChat);
+
+      if (currentChart) {
+        setAstrologyData(currentChart);
+      } else {
+        const calculated = await astrologyEngine.calculateAll(current);
+        setAstrologyData(calculated);
+      }
+    } catch (err: any) {
+      console.error('Import backup failed:', err);
+      setError('Import failed: ' + (err?.message || 'Invalid backup payload'));
+      throw err;
+    } finally {
+      setIsCalculating(false);
+    }
+  }, []);
+
   const clearError = useCallback(() => setError(null), []);
 
   return (
@@ -436,6 +483,8 @@ export const AstrologyProvider: React.FC<{ children: ReactNode }> = ({ children 
         clearChat,
         clearChatForProfile,
         recalculate,
+        exportBackupData,
+        importBackupData,
         clearError
       }}
     >

@@ -244,3 +244,14 @@ export interface ChatMessage {
   timestamp: number;
   isStreaming?: boolean;
 }
+
+export interface BackupPackage {
+  app: 'AstroOracle';
+  version: string;
+  exportedAt: string;
+  apiKey: string;
+  activeProfileId: string;
+  profiles: UserProfile[];
+  chats: Record<string, ChatMessage[]>;
+  charts: Record<string, CalculatedAstrologyData>;
+}

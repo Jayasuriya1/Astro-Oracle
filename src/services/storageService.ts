@@ -1,5 +1,5 @@
 import localforage from 'localforage';
-import type { UserProfile, CalculatedAstrologyData, ChatMessage } from '../types/astrology';
+import type { UserProfile, CalculatedAstrologyData, ChatMessage, BackupPackage } from '../types/astrology';
 
 // Initialize IndexedDB storage instance
 const store = localforage.createInstance({
@@ -162,5 +162,79 @@ export const storageService = {
     await this.saveProfiles(updated);
     await store.removeItem(KEYS.CHAT_PREFIX + profileId);
     await store.removeItem(KEYS.CHART_PREFIX + profileId);
+  },
+
+  // Export all IndexedDB state into a single portable backup object
+  async exportBackup(): Promise<BackupPackage> {
+    const profiles = await this.getProfiles();
+    const activeProfileId = await this.getActiveProfileId();
+    const apiKey = await this.getApiKey();
+
+    const chats: Record<string, ChatMessage[]> = {};
+    const charts: Record<string, CalculatedAstrologyData> = {};
+
+    for (const p of profiles) {
+      const chat = await this.getChatHistory(p.id);
+      if (chat && chat.length > 0) {
+        chats[p.id] = chat;
+      }
+      const chart = await this.getAstrologyData(p.id);
+      if (chart) {
+        charts[p.id] = chart;
+      }
+    }
+
+    return {
+      app: 'AstroOracle',
+      version: '1.0',
+      exportedAt: new Date().toISOString(),
+      apiKey,
+      activeProfileId,
+      profiles,
+      chats,
+      charts
+    };
+  },
+
+  // Import and restore IndexedDB state from a backup package
+  async importBackup(backup: BackupPackage): Promise<void> {
+    if (!backup || typeof backup !== 'object') {
+      throw new Error('Invalid backup file payload.');
+    }
+    if (!Array.isArray(backup.profiles) || backup.profiles.length === 0) {
+      throw new Error('No family profiles found in backup payload.');
+    }
+
+    // Restore API key if present
+    if (typeof backup.apiKey === 'string') {
+      await this.saveApiKey(backup.apiKey);
+    }
+
+    // Restore profiles list
+    await this.saveProfiles(backup.profiles);
+
+    // Restore active profile ID
+    const validActiveId = backup.profiles.some(p => p.id === backup.activeProfileId)
+      ? backup.activeProfileId
+      : backup.profiles[0].id;
+    await this.setActiveProfileId(validActiveId);
+
+    // Restore isolated chat history for each profile
+    if (backup.chats && typeof backup.chats === 'object') {
+      for (const profileId of Object.keys(backup.chats)) {
+        if (Array.isArray(backup.chats[profileId])) {
+          await this.saveChatHistory(profileId, backup.chats[profileId]);
+        }
+      }
+    }
+
+    // Restore calculated chart data for each profile
+    if (backup.charts && typeof backup.charts === 'object') {
+      for (const profileId of Object.keys(backup.charts)) {
+        if (backup.charts[profileId]) {
+          await this.saveAstrologyData(profileId, backup.charts[profileId]);
+        }
+      }
+    }
   }
 };

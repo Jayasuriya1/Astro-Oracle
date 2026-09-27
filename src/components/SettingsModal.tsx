@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
@@ -16,7 +16,11 @@ import {
   UserPlus,
   Users,
   Trash2,
-  ShieldCheck
+  ShieldCheck,
+  Download,
+  Upload,
+  Share2,
+  HardDrive
 } from 'lucide-react';
 import { useAstrology } from '../context/AstrologyContext';
 import { aiService } from '../services/aiService';
@@ -59,7 +63,9 @@ export const SettingsModal: React.FC = () => {
     updateApiKey,
     isCalculating,
     settingsModalMode,
-    setSettingsModalMode
+    setSettingsModalMode,
+    exportBackupData,
+    importBackupData
   } = useAstrology();
 
   const [activeTab, setActiveTab] = useState<'profile' | 'apikey'>('profile');
@@ -73,6 +79,138 @@ export const SettingsModal: React.FC = () => {
   const [confirmDelete, setConfirmDelete] = useState<boolean>(false);
   const [confirmClearChat, setConfirmClearChat] = useState<boolean>(false);
   const [clearChatDone, setClearChatDone] = useState<boolean>(false);
+
+  // Backup & Device Transfer state
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [backupMessage, setBackupMessage] = useState<string | null>(null);
+  const [isBackupBusy, setIsBackupBusy] = useState<boolean>(false);
+
+  // Export JSON file download
+  const handleDownloadBackup = async () => {
+    setIsBackupBusy(true);
+    setBackupMessage(null);
+    try {
+      const data = await exportBackupData();
+      const jsonStr = JSON.stringify(data, null, 2);
+      const dateStr = new Date().toISOString().split('T')[0];
+      const fileName = `AstroOracle_Backup_${dateStr}.json`;
+
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      setBackupMessage(`Backup '${fileName}' downloaded!`);
+      setTimeout(() => setBackupMessage(null), 4000);
+    } catch (err: any) {
+      console.error('Download backup failed:', err);
+      alert('Failed to generate backup file: ' + (err?.message || 'Error'));
+    } finally {
+      setIsBackupBusy(false);
+    }
+  };
+
+  // Export via WhatsApp / System Share API
+  const handleExportWhatsApp = async () => {
+    setIsBackupBusy(true);
+    setBackupMessage(null);
+    try {
+      const data = await exportBackupData();
+      const jsonStr = JSON.stringify(data, null, 2);
+      const dateStr = new Date().toISOString().split('T')[0];
+      const fileName = `AstroOracle_Backup_${dateStr}.json`;
+
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const file = new File([blob], fileName, { type: 'application/json' });
+
+      // Native Web Share API with file support (Mobile browsers)
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: 'Astro Oracle Backup Data',
+          text: `Astro Oracle Backup (${data.profiles.length} profiles) - ${dateStr}`
+        });
+        setBackupMessage('Backup file shared successfully via WhatsApp / App!');
+        setTimeout(() => setBackupMessage(null), 4000);
+      } else {
+        // Desktop Browser Fallback: Download file & open WhatsApp web
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        const waText = encodeURIComponent(
+          `🔮 *Astro Oracle Backup File*\n` +
+          `Date: ${dateStr}\n` +
+          `Profiles: ${data.profiles.length} family profiles saved.\n\n` +
+          `*Instruction:* Attach '${fileName}' in WhatsApp chat to restore profiles on another device!`
+        );
+
+        window.open(`https://api.whatsapp.com/send?text=${waText}`, '_blank');
+        setBackupMessage(`Backup downloaded! Attach '${fileName}' on WhatsApp.`);
+        setTimeout(() => setBackupMessage(null), 5000);
+      }
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        console.error('WhatsApp export failed:', err);
+        alert('Failed to share via WhatsApp: ' + (err?.message || 'Error'));
+      }
+    } finally {
+      setIsBackupBusy(false);
+    }
+  };
+
+  // Import Backup JSON file
+  const handleFileImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsBackupBusy(true);
+    setBackupMessage(null);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          const jsonText = event.target?.result as string;
+          const parsed = JSON.parse(jsonText);
+
+          if (!parsed || !Array.isArray(parsed.profiles)) {
+            alert('Invalid backup file. Please select a valid Astro Oracle JSON backup file.');
+            setIsBackupBusy(false);
+            return;
+          }
+
+          const confirmed = window.confirm(
+            `Restore Astro Oracle Backup?\n\n` +
+            `• Family Profiles: ${parsed.profiles.length}\n` +
+            `• Gemini API Key: ${parsed.apiKey ? 'Included' : 'Not set'}\n` +
+            `• Export Date: ${parsed.exportedAt ? new Date(parsed.exportedAt).toLocaleDateString() : 'Unknown'}\n\n` +
+            `Click OK to import these profiles into local IndexedDB.`
+          );
+
+          if (confirmed) {
+            await importBackupData(parsed);
+            setBackupMessage(`Successfully restored ${parsed.profiles.length} profiles!`);
+            setTimeout(() => setBackupMessage(null), 4000);
+          }
+        } catch (parseErr: any) {
+          alert('Error reading backup JSON file: ' + (parseErr?.message || 'Invalid format'));
+        } finally {
+          setIsBackupBusy(false);
+          if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+      };
+      reader.readAsText(file);
+    } catch (err: any) {
+      alert('Failed to read file: ' + (err?.message || 'Error'));
+      setIsBackupBusy(false);
+    }
+  };
 
   // Sync state whenever modal opens or mode changes
   useEffect(() => {
@@ -529,6 +667,77 @@ export const SettingsModal: React.FC = () => {
                         onChange={(e) => setFormData({ ...formData, currentState: e.target.value })}
                         placeholder="e.g. Tamil Nadu"
                         className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs sm:text-sm text-slate-100 focus:outline-none focus:border-amber-400"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* INDEXDB BACKUP & RESTORE / DEVICE TRANSFER CARD */}
+                <div className="pt-3 border-t border-slate-800/80 space-y-2.5">
+                  <div className="p-3.5 sm:p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <HardDrive className="w-4 h-4 text-purple-400" />
+                        <h4 className="text-xs sm:text-sm font-bold text-slate-200">
+                          IndexedDB Backup & Device Transfer
+                        </h4>
+                      </div>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                        Zero Server
+                      </span>
+                    </div>
+
+                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                      Export your saved family profiles ({profiles.length}) and Gemini key to transfer between devices without a backend server. Share directly via WhatsApp or download a JSON backup.
+                    </p>
+
+                    {backupMessage && (
+                      <div className="p-2.5 rounded-lg bg-emerald-950/60 border border-emerald-800/80 text-xs text-emerald-300 flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                        <span>{backupMessage}</span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-2 flex-wrap pt-1">
+                      {/* Export JSON Download */}
+                      <button
+                        type="button"
+                        disabled={isBackupBusy}
+                        onClick={handleDownloadBackup}
+                        className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition flex items-center gap-1.5 disabled:opacity-50"
+                      >
+                        <Download className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Export Data (.json)</span>
+                      </button>
+
+                      {/* Export via WhatsApp */}
+                      <button
+                        type="button"
+                        disabled={isBackupBusy}
+                        onClick={handleExportWhatsApp}
+                        className="px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 text-xs font-semibold border border-emerald-500/40 transition flex items-center gap-1.5 disabled:opacity-50"
+                      >
+                        <Share2 className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Share via WhatsApp</span>
+                      </button>
+
+                      {/* Import / Restore JSON File */}
+                      <button
+                        type="button"
+                        disabled={isBackupBusy}
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-3 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 text-xs font-semibold border border-purple-500/40 transition flex items-center gap-1.5 disabled:opacity-50"
+                      >
+                        <Upload className="w-3.5 h-3.5 text-purple-400" />
+                        <span>Import Data / Restore</span>
+                      </button>
+
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".json"
+                        className="hidden"
+                        onChange={handleFileImport}
                       />
                     </div>
                   </div>
