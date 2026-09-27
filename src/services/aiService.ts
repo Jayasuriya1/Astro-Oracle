@@ -2,44 +2,80 @@ import { GoogleGenAI } from '@google/genai';
 import { storageService } from './storageService';
 import type { ChatMessage, CalculatedAstrologyData, UserProfile } from '../types/astrology';
 
-// Construct the EXACT required systemInstruction prompt
+// Construct a concise, token-efficient astrological summary instead of a massive raw JSON dump
 export function buildSystemInstruction(
   astroData: CalculatedAstrologyData,
   profile: UserProfile
 ): string {
-  const tropicalJsonStr = JSON.stringify(astroData.tropicalChart, null, 2);
-  const siderealCombined = {
-    birthChart: astroData.siderealChart,
-    currentTransits: astroData.transits.sidereal
-  };
-  const siderealJsonStr = JSON.stringify(siderealCombined, null, 2);
-
-  const currentDasha = astroData.siderealChart.dashaReport?.currentMahadasha;
+  const { siderealChart, tropicalChart, transits } = astroData;
+  const currentDasha = siderealChart?.dashaReport?.currentMahadasha;
   const currentAntardasha = currentDasha?.antardashas?.find((a) => a.isCurrent);
-  const dashaInfo = currentDasha
-    ? `ACTIVE VIMSHOTTARI DASHA TIMELINE:
-- Current Mahadasha: ${currentDasha.lord} (${currentDasha.startDate} to ${currentDasha.endDate}, ${currentDasha.percentagePassed}% completed)
-- Current Antardasha (Bhukti): ${currentDasha.lord} / ${currentAntardasha ? currentAntardasha.lord : 'Active'} (${currentAntardasha ? `${currentAntardasha.startDate} to ${currentAntardasha.endDate}` : ''})
-Use this active Dasha period to date your predictions with exact year and month precision.`
+
+  // Compact Sidereal Lahiri Birth Placements
+  const siderealLines = siderealChart?.planets
+    ? [
+        `Lagna (Ascendant): ${siderealChart.lagna.sign} (${siderealChart.lagna.formattedDegree}), Nakshatra: ${siderealChart.lagna.nakshatra || ''} P${siderealChart.lagna.pada || 1}`,
+        ...siderealChart.planets.map(
+          (p) =>
+            `- ${p.name}: ${p.sign} (${p.formattedDegree}) in House ${p.house}, Nakshatra: ${p.nakshatra} P${p.nakshatraPada}, Lord: ${p.nakshatraLord}${p.isRetrograde ? ' (Retrograde)' : ''}`
+        )
+      ].join('\n')
     : '';
 
-  // Hardcoded EXACT required text as specified in instructions
+  // Compact Navamsha D9
+  const navamshaLines = siderealChart?.navamshaChart
+    ? `D9 Lagna: ${siderealChart.navamshaChart.lagna.sign}\nD9 Planets: ` +
+      siderealChart.navamshaChart.planets.map((p) => `${p.name}: ${p.sign}`).join(', ')
+    : '';
+
+  // Compact Live Transits (Gochar)
+  const transitLines = transits?.sidereal?.planets
+    ? transits.sidereal.planets
+        .map((p) => `${p.name}: ${p.sign} (${p.formattedDegree})${p.isRetrograde ? ' (R)' : ''}`)
+        .join(', ')
+    : '';
+
+  // Compact Western (Tropical Placidus)
+  const tropicalLines = tropicalChart
+    ? [
+        `Ascendant: ${tropicalChart.ascendant?.formattedDegree || ''}, Midheaven: ${tropicalChart.midheaven?.formattedDegree || ''}`,
+        'Planets: ' +
+          tropicalChart.planets
+            .map((p) => `${p.name} in ${p.sign} (${p.formattedDegree}, H${p.house})`)
+            .join(', '),
+        'Key Aspects: ' +
+          tropicalChart.aspects
+            .slice(0, 10)
+            .map((a) => `${a.planet1} ${a.aspectType} ${a.planet2} (${a.orb.toFixed(1)}°)`)
+            .join(', ')
+      ].join('\n')
+    : '';
+
+  const dashaInfo = currentDasha
+    ? `ACTIVE VIMSHOTTARI TIMELINE:
+- Current Mahadasha: ${currentDasha.lord} (${currentDasha.startDate} to ${currentDasha.endDate}, ${currentDasha.percentagePassed}% elapsed)
+- Current Antardasha (Bhukti): ${currentDasha.lord} / ${currentAntardasha ? currentAntardasha.lord : 'Active'} (${currentAntardasha ? `${currentAntardasha.startDate} to ${currentAntardasha.endDate}` : ''})`
+    : '';
+
   return `You are an elite, highly empathetic Astrologer. You have access to BOTH the user's Western (Tropical) and Vedic (Sidereal/Lahiri) charts. Do not guess, infer, or hallucinate planetary positions.
 
-WESTERN CHART (Tropical):
-${tropicalJsonStr}
+NATIVE PROFILE: ${profile.name} (Born: ${profile.birthDate} at ${profile.birthTime}, ${profile.currentCity || ''}, ${profile.currentState || ''})
 
-VEDIC CHART & TRANSITS (Sidereal Lahiri):
-${siderealJsonStr}
+SIDEREAL (VEDIC LAHIRI) BIRTH CHART:
+${siderealLines}
 
-${dashaInfo}
+${navamshaLines ? `D9 NAVAMSHA CHART:\n${navamshaLines}\n` : ''}
+${transitLines ? `CURRENT VEDIC TRANSITS (GOCHAR):\n${transitLines}\n` : ''}
+${dashaInfo ? `${dashaInfo}\n` : ''}
+WESTERN (TROPICAL PLACIDUS) CHART:
+${tropicalLines}
 
-HYBRID ANALYSIS RULES (CRITICAL):
+HYBRID ANALYSIS RULES:
 1. IF THE USER ASKS ABOUT PERSONALITY OR EMOTIONS (e.g., "Why am I so angry?"): Use the WESTERN CHART. Focus on psychological archetypes and emotional validation.
 2. IF THE USER ASKS ABOUT TIMING OR CONCRETE EVENTS (e.g., "When will I get married?", "Will my business succeed?"): Use the VEDIC CHART. Analyze the relevant Sidereal houses (e.g., 7th for marriage, 10th for career) and their ruling planets.
 3. SYNTHESIS REQUIREMENT: Cross-check every conclusion with at least two factors (e.g., a House Lord + Current Transit).
-4. STRUCTURAL FORMATTING REQUIREMENT (CRITICAL):
-Always format your response using distinct markdown headers (e.g., "## Executive Summary", "## Psychological Blueprint", "## Karmic & Relationship Indicators", "## Timing & Dasha Periods", "## Actionable Remedies & Temples"). This allows the client-side UI to render your consultation into clean, framed visual card blocks.
+4. FLUID, CONVERSATIONAL & DIRECT RESPONSES:
+Answer the user's specific inquiry directly and naturally. Do NOT force a rigid, repeated template or standardized headings (e.g. do not repeat "Executive Summary", "Psychological Blueprint", etc. unless the user asks for a comprehensive full-chart analysis). Provide personalized, engaging, and clear insights tailored specifically to their question.
 
 REMEDY & PARIKARAM RULES:
 When the user asks for remedies, dosha pariharams, or bad-phase solutions, you MUST structure your answer into three practical tiers based on their CURRENT LOCATION (${profile.currentCity}, ${profile.currentState}):
@@ -70,7 +106,7 @@ class AIService {
     try {
       const testClient = new GoogleGenAI({ apiKey: key });
       const response = await testClient.models.generateContent({
-        model: 'gemini-3.8-flash',
+        model: 'gemini-2.5-flash',
         contents: 'Ping: respond with "OK"'
       });
       return !!response.text;
@@ -80,7 +116,7 @@ class AIService {
     }
   }
 
-  // Stream chat response
+  // Stream chat response with sliding window and automatic fallback for 503 high demand
   async streamChat(
     history: ChatMessage[],
     userMessage: string,
@@ -91,20 +127,22 @@ class AIService {
     const client = await this.getClient();
     const systemInstruction = buildSystemInstruction(astroData, profile);
 
-    // Format conversation history for Gemini API
-    // Filter out initial system welcoming messages if any
+    // Keep payload fast and light: use sliding window of the last 6-8 messages
+    const recentHistory = history.slice(-8);
     const contents: Array<{ role: 'user' | 'model'; parts: Array<{ text: string }> }> = [];
 
-    for (const msg of history) {
+    for (const msg of recentHistory) {
       if (msg.sender === 'user') {
         contents.push({
           role: 'user',
           parts: [{ text: msg.text }]
         });
       } else if (msg.sender === 'assistant' && msg.text && !msg.isStreaming) {
+        // Cap past assistant messages to avoid token blow-up
+        const textContent = msg.text.length > 2500 ? msg.text.slice(0, 2500) + '...' : msg.text;
         contents.push({
           role: 'model',
-          parts: [{ text: msg.text }]
+          parts: [{ text: textContent }]
         });
       }
     }
@@ -115,32 +153,56 @@ class AIService {
       parts: [{ text: userMessage }]
     });
 
-    let fullResponse = '';
+    // Model candidate fallback chain to avoid 503 "high demand" errors
+    const modelsToTry = ['gemini-2.5-flash', 'gemini-3.8-flash', 'gemini-2.0-flash'];
+    let lastError: any = null;
 
-    try {
-      const stream = await client.models.generateContentStream({
-        model: 'gemini-3.8-flash',
-        contents,
-        config: {
-          systemInstruction,
-          temperature: 0.7,
-          topP: 0.95
-        }
-      });
+    for (const model of modelsToTry) {
+      let fullResponse = '';
+      try {
+        const stream = await client.models.generateContentStream({
+          model,
+          contents,
+          config: {
+            systemInstruction,
+            temperature: 0.7,
+            topP: 0.95
+          }
+        });
 
-      for await (const chunk of stream) {
-        const text = chunk.text;
-        if (text) {
-          fullResponse += text;
-          onChunk(fullResponse);
+        for await (const chunk of stream) {
+          const text = chunk.text;
+          if (text) {
+            fullResponse += text;
+            onChunk(fullResponse);
+          }
         }
+
+        if (fullResponse) {
+          return fullResponse;
+        }
+      } catch (err: any) {
+        lastError = err;
+        const msg = (err?.message || '').toLowerCase();
+        const isTemporaryCapacityIssue =
+          msg.includes('503') ||
+          msg.includes('high demand') ||
+          msg.includes('unavailable') ||
+          msg.includes('overloaded') ||
+          msg.includes('rate limit') ||
+          msg.includes('429');
+
+        if (isTemporaryCapacityIssue) {
+          console.warn(`Model ${model} encountered capacity spike (${err.message}). Trying fallback model...`);
+          continue;
+        }
+
+        // If it's an auth error (e.g. invalid key), fail immediately
+        throw err;
       }
-
-      return fullResponse;
-    } catch (err: any) {
-      console.error('Streaming error with Gemini API:', err);
-      throw new Error(err?.message || 'Failed to communicate with the Oracle. Check your API key and quota.');
     }
+
+    throw lastError || new Error('All astrological intelligence models are currently experiencing high demand. Please try again shortly.');
   }
 }
 
