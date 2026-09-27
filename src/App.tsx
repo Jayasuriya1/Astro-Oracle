@@ -11,18 +11,19 @@ const MainContent: React.FC = () => {
   const { activeView } = useAstrology();
 
   return (
-    <div className="relative z-10 flex flex-col min-h-screen">
+    <div className="relative z-10 flex flex-col h-screen h-[100dvh] overflow-hidden">
       <Navbar />
 
-      <main className="flex-1">
+      <main className="flex-1 min-h-0 relative overflow-hidden">
         <AnimatePresence mode="wait">
           {activeView === 'chat' && (
             <motion.div
               key="chat"
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.25 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="h-full w-full overflow-hidden"
             >
               <OracleChat />
             </motion.div>
@@ -31,10 +32,11 @@ const MainContent: React.FC = () => {
           {activeView === 'charts' && (
             <motion.div
               key="charts"
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.25 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="h-full w-full overflow-y-auto no-scrollbar"
             >
               <ChartViewer defaultSubTab="vedic" />
             </motion.div>
@@ -43,10 +45,11 @@ const MainContent: React.FC = () => {
           {activeView === 'transits' && (
             <motion.div
               key="transits"
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.25 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="h-full w-full overflow-y-auto no-scrollbar"
             >
               <ChartViewer defaultSubTab="transits" />
             </motion.div>
@@ -62,7 +65,7 @@ const MainContent: React.FC = () => {
 export function App() {
   return (
     <AstrologyProvider>
-      <div className="min-h-screen bg-slate-950 text-slate-100 relative overflow-hidden selection:bg-purple-600 selection:text-white">
+      <div className="h-screen h-[100dvh] bg-slate-950 text-slate-100 relative overflow-hidden selection:bg-purple-600 selection:text-white">
         {/* Subtle radial ambient cosmic glow */}
         <div className="fixed -top-40 -left-40 w-96 h-96 bg-purple-600/10 rounded-full blur-[128px] pointer-events-none" />
         <div className="fixed top-1/3 -right-40 w-96 h-96 bg-amber-500/10 rounded-full blur-[128px] pointer-events-none" />

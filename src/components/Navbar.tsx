@@ -1,5 +1,4 @@
-import React from 'react';
-import { Sparkles, Compass, Settings, ShieldCheck, KeyRound, Radio } from 'lucide-react';
+import { Sparkles, Compass, Settings, Radio } from 'lucide-react';
 import { useAstrology } from '../context/AstrologyContext';
 
 export const Navbar: React.FC = () => {
@@ -13,146 +12,147 @@ export const Navbar: React.FC = () => {
     isCalculating
   } = useAstrology();
 
-  // Extract quick signs
+  // Extract quick celestial signs
   const tropicalSun = astrologyData?.tropicalChart?.planets?.find(p => p.name === 'Sun');
   const vedicMoon = astrologyData?.siderealChart?.planets?.find(p => p.name === 'Moon');
   const vedicLagna = astrologyData?.siderealChart?.lagna;
 
   return (
-    <header className="sticky top-0 z-30 w-full border-b border-slate-800/80 bg-slate-950/70 backdrop-blur-xl">
+    <header className="relative z-30 w-full border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-2xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-        {/* Brand */}
-        <div className="flex items-center gap-3">
-          <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500/20 via-purple-500/20 to-cyan-500/20 border border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
-            <Sparkles className="w-5 h-5 text-amber-400 animate-pulse" />
+        {/* Left: Brand Identity */}
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500/25 via-purple-500/20 to-indigo-500/25 border border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.25)] flex-shrink-0">
+            <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-purple-200 to-cyan-200 text-lg sm:text-xl font-serif">
-                ASTRO ORACLE
-              </span>
-              <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-400/10 text-amber-300 border border-amber-400/20">
-                PRO
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-400 hidden sm:block">
-              WASM High-Accuracy • Hybrid Western & Vedic Intelligence
-            </p>
+          <div className="flex items-center gap-2.5">
+            <span className="font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-purple-100 to-cyan-100 text-lg sm:text-xl font-serif whitespace-nowrap">
+              ASTRO ORACLE
+            </span>
+            <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/30 tracking-wider">
+              HYBRID AI
+            </span>
           </div>
         </div>
 
-        {/* Navigation Tabs */}
-        <div className="hidden md:flex items-center p-1 rounded-xl bg-slate-900/80 border border-slate-800">
+        {/* Center: Clean Segmented Navigation Controller */}
+        <nav className="hidden md:flex items-center p-1 rounded-xl bg-slate-900/90 border border-slate-800/90 shadow-inner">
           <button
             onClick={() => setActiveView('chat')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-1.5 ${
+            className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-2 ${
               activeView === 'chat'
-                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/25'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/30'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
             }`}
           >
-            <Sparkles className="w-3.5 h-3.5" />
-            Oracle Chat
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            <span>Oracle Chat</span>
           </button>
 
           <button
             onClick={() => setActiveView('charts')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-1.5 ${
+            className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-2 ${
               activeView === 'charts'
-                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/25'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/30'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
             }`}
           >
-            <Compass className="w-3.5 h-3.5" />
-            Natal Placements
+            <Compass className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Natal Placements</span>
           </button>
 
           <button
             onClick={() => setActiveView('transits')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-1.5 ${
+            className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-2 ${
               activeView === 'transits'
-                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/25'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/30'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
             }`}
           >
-            <Radio className="w-3.5 h-3.5" />
-            Live Transits
+            <Radio className="w-3.5 h-3.5 text-rose-400" />
+            <span>Live Transits</span>
           </button>
-        </div>
+        </nav>
 
-        {/* Right side controls & badges */}
-        <div className="flex items-center gap-3">
-          {/* Quick celestial pill */}
+        {/* Right: Unified Profile, Signs & Settings Pill */}
+        <div className="flex items-center gap-2.5 flex-shrink-0">
+          {/* Subtle Signs Pill (Desktop) */}
           {tropicalSun && vedicMoon && (
-            <div className="hidden lg:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900/90 border border-slate-800 text-[11px] text-slate-300">
-              <span className="text-amber-400 font-medium">☉ {tropicalSun.sign}</span>
-              <span className="text-slate-600">•</span>
-              <span className="text-cyan-400 font-medium">☽ {vedicMoon.sign} ({vedicMoon.nakshatra})</span>
+            <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/60 border border-slate-800 text-[11px] text-slate-300">
+              <span className="text-amber-300 font-medium">☉ {tropicalSun.sign}</span>
+              <span className="text-slate-700">•</span>
+              <span className="text-cyan-300 font-medium">☽ {vedicMoon.sign}</span>
               {vedicLagna && (
                 <>
-                  <span className="text-slate-600">•</span>
-                  <span className="text-purple-400 font-medium">Asc: {vedicLagna.sign}</span>
+                  <span className="text-slate-700">•</span>
+                  <span className="text-purple-300 font-medium">Asc {vedicLagna.sign}</span>
                 </>
               )}
             </div>
           )}
 
-          {/* Engine status indicator */}
-          <div
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] bg-slate-900/80 border border-slate-800 text-slate-400"
-            title="Swiss Ephemeris WebAssembly engine operates purely locally in your browser"
-          >
-            {isCalculating ? (
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-            ) : (
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            )}
-            <span className="hidden sm:inline">{isCalculating ? 'Computing...' : 'WASM Engine'}</span>
-          </div>
-
-          {/* Settings button with BYOK status indicator */}
+          {/* Unified Settings / Profile Card */}
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className="relative flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800/90 border border-slate-700/80 text-xs font-medium text-slate-200 hover:text-white transition-all shadow-sm group"
-            title="Configure Gemini API Key & Birth Details"
+            className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-200 hover:text-white transition shadow-sm group"
+            title="Configure Birth Details & Gemini API Key"
           >
-            {apiKey ? (
-              <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-            ) : (
-              <div className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+            <div className="relative flex items-center justify-center">
+              {isCalculating ? (
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
+              ) : apiKey ? (
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]" />
+              ) : (
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
+              )}
+            </div>
+
+            <span className="text-xs font-semibold tracking-wide text-slate-200">
+              {profile.name}
+            </span>
+
+            {!apiKey && (
+              <span className="text-[10px] text-amber-300 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded font-medium">
+                Add Key
+              </span>
             )}
-            <KeyRound className="w-3.5 h-3.5 text-amber-400 group-hover:rotate-12 transition-transform" />
-            <span className="hidden sm:inline">{profile.name}</span>
-            <Settings className="w-3.5 h-3.5 text-slate-400 group-hover:rotate-45 transition-transform" />
+
+            <Settings className="w-3.5 h-3.5 text-slate-400 group-hover:rotate-45 group-hover:text-slate-200 transition-transform" />
           </button>
         </div>
       </div>
 
-      {/* Mobile sub-bar navigation */}
-      <div className="md:hidden flex items-center justify-around border-t border-slate-800/60 bg-slate-950/80 px-2 py-1.5">
+      {/* Mobile Bottom Navigation Strip */}
+      <div className="md:hidden flex items-center justify-around border-t border-slate-800/80 bg-slate-950/90 px-3 py-2">
         <button
           onClick={() => setActiveView('chat')}
-          className={`flex-1 py-1 text-center text-xs font-medium rounded-lg ${
-            activeView === 'chat' ? 'bg-purple-600/30 text-purple-200 border border-purple-500/30' : 'text-slate-400'
+          className={`flex-1 py-1.5 text-center text-xs font-medium rounded-lg transition ${
+            activeView === 'chat'
+              ? 'bg-purple-600/30 text-purple-200 border border-purple-500/40'
+              : 'text-slate-400'
           }`}
         >
           Oracle Chat
         </button>
         <button
           onClick={() => setActiveView('charts')}
-          className={`flex-1 py-1 text-center text-xs font-medium rounded-lg ${
-            activeView === 'charts' ? 'bg-purple-600/30 text-purple-200 border border-purple-500/30' : 'text-slate-400'
+          className={`flex-1 py-1.5 text-center text-xs font-medium rounded-lg transition ${
+            activeView === 'charts'
+              ? 'bg-purple-600/30 text-purple-200 border border-purple-500/40'
+              : 'text-slate-400'
           }`}
         >
-          Placements
+          Natal Placements
         </button>
         <button
           onClick={() => setActiveView('transits')}
-          className={`flex-1 py-1 text-center text-xs font-medium rounded-lg ${
-            activeView === 'transits' ? 'bg-purple-600/30 text-purple-200 border border-purple-500/30' : 'text-slate-400'
+          className={`flex-1 py-1.5 text-center text-xs font-medium rounded-lg transition ${
+            activeView === 'transits'
+              ? 'bg-purple-600/30 text-purple-200 border border-purple-500/40'
+              : 'text-slate-400'
           }`}
         >
-          Transits
+          Live Transits
         </button>
       </div>
     </header>
