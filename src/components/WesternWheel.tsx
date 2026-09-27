@@ -113,11 +113,11 @@ export const WesternWheel: React.FC<WesternWheelProps> = ({
   };
 
   return (
-    <div className={`relative flex flex-col items-center select-none ${className}`}>
-      <div className="w-full max-w-[440px] aspect-square rounded-2xl p-1 sm:p-2 bg-slate-950/80 border border-slate-800 shadow-2xl backdrop-blur-xl">
+    <div className={`relative flex flex-col items-center select-none w-full ${className}`}>
+      <div className="w-full max-w-[500px] sm:max-w-[520px] aspect-square rounded-2xl p-1 sm:p-2 bg-slate-950/80 border border-slate-800 shadow-2xl backdrop-blur-xl">
         <svg
           viewBox="0 0 440 440"
-          className="w-full h-full font-sans"
+          className="w-full h-full font-sans block"
           style={{ shapeRendering: 'geometricPrecision' }}
         >
           <defs>
@@ -285,13 +285,13 @@ export const WesternWheel: React.FC<WesternWheelProps> = ({
       </div>
 
       {/* Stable, Fixed-Height Interactive Footer Bar (Prevents Layout Shifting & Lag) */}
-      <div className="w-full max-w-[420px] h-8 mt-2 flex items-center justify-center text-center text-xs px-3 rounded-xl border border-slate-800/80 bg-slate-950/60 backdrop-blur-md overflow-hidden transition-colors">
+      <div className="w-full max-w-[500px] sm:max-w-[520px] h-8 mt-2 flex items-center justify-center text-center text-xs px-3 rounded-xl border border-slate-800/80 bg-slate-950/60 backdrop-blur-md overflow-hidden transition-colors">
         {hoveredPlanet ? (
           (() => {
             const pl = planets.find((p) => p.name === hoveredPlanet);
             if (!pl) return null;
             return (
-              <p className="truncate text-slate-200">
+              <p className="truncate min-w-0 max-w-full text-slate-200">
                 <span className="text-amber-300 font-semibold">{pl.name}</span> in{' '}
                 <span className="text-cyan-300 font-medium">{pl.sign} ({pl.formattedDegree})</span> • House {pl.house}
                 {pl.isRetrograde && <span className="text-rose-400 font-bold ml-1">(R)</span>}
@@ -299,7 +299,7 @@ export const WesternWheel: React.FC<WesternWheelProps> = ({
             );
           })()
         ) : (
-          <p className="text-[11px] text-slate-500 truncate flex items-center gap-1.5">
+          <p className="text-[11px] text-slate-500 truncate min-w-0 max-w-full flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-slate-600 inline-block" />
             Hover over any planet node to inspect coordinates
           </p>

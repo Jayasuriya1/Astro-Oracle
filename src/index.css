@@ -21,6 +21,12 @@
     color: #f1f5f9;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     overflow: hidden; /* App root handles interior scroll strictly without page scrollbars */
+    scrollbar-gutter: stable;
+  }
+
+  /* Prevent width jitter when scrollbars toggle */
+  .overflow-y-auto {
+    scrollbar-gutter: stable;
   }
 
   /* Universal dark scrollbars matching cosmic theme */

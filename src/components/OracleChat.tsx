@@ -120,9 +120,9 @@ export const OracleChat: React.FC = () => {
       className="flex flex-col lg:flex-row h-full w-full max-w-7xl mx-auto px-2.5 sm:px-5 lg:px-6 pt-1.5 sm:pt-2 pb-20 md:pb-3 gap-3.5 lg:gap-5 overflow-hidden"
     >
       {/* ============================================================ */}
-      {/* DESKTOP STUDIO: LEFT COLUMN (42% width, Visual Chart & Math) */}
+      {/* DESKTOP STUDIO: LEFT COLUMN (Enlarged for Prominent Chart)   */}
       {/* ============================================================ */}
-      <div className="hidden lg:flex lg:w-[42%] xl:w-[40%] flex-col h-full min-h-0 overflow-y-auto no-scrollbar space-y-3.5 pr-1.5 flex-shrink-0">
+      <div className="hidden lg:flex lg:w-[48%] xl:w-[45%] flex-col h-full min-h-0 overflow-y-auto no-scrollbar space-y-3.5 pr-1.5 flex-shrink-0">
         {/* Studio Top Banner with Export Shortcut */}
         <div className="p-3 rounded-2xl bg-slate-900/80 border border-slate-800/90 shadow-md backdrop-blur-xl flex items-center justify-between">
           <div className="flex items-center gap-2">

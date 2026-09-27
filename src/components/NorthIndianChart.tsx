@@ -150,11 +150,11 @@ export const NorthIndianChart: React.FC<NorthIndianChartProps> = ({
   const baseIndex = lagnaSignIndex >= 0 ? lagnaSignIndex : 0;
 
   return (
-    <div className={`relative flex flex-col items-center select-none ${className}`}>
-      <div className="w-full max-w-[440px] aspect-square rounded-2xl p-1 sm:p-2 bg-slate-950/80 border border-slate-800 shadow-2xl backdrop-blur-xl">
+    <div className={`relative flex flex-col items-center select-none w-full ${className}`}>
+      <div className="w-full max-w-[500px] sm:max-w-[520px] aspect-square rounded-2xl p-1 sm:p-2 bg-slate-950/80 border border-slate-800 shadow-2xl backdrop-blur-xl">
         <svg
           viewBox="0 0 400 400"
-          className="w-full h-full font-sans"
+          className="w-full h-full font-sans block"
           style={{ shapeRendering: 'geometricPrecision' }}
         >
           <defs>
@@ -170,7 +170,7 @@ export const NorthIndianChart: React.FC<NorthIndianChartProps> = ({
           </defs>
 
           {/* Background */}
-          <rect x={1} y={1} width={398} height={398} fill="#030712" stroke="#334155" strokeWidth="1.5" rx={10} />
+          <rect x={1} y={1} width={398} height={398} fill="#030712" stroke="#334155" strokeWidth="1.5" rx={10} className="pointer-events-none" />
 
           {/* Render 12 Diamond Houses */}
           {HOUSES_GEOMETRY.map((hGeom) => {
@@ -187,9 +187,7 @@ export const NorthIndianChart: React.FC<NorthIndianChartProps> = ({
             return (
               <g
                 key={houseNum}
-                className="cursor-pointer"
-                onMouseEnter={() => setHoveredHouse(houseNum)}
-                onMouseLeave={() => setHoveredHouse(null)}
+                className="pointer-events-none"
               >
                 {/* House Shape */}
                 <path
@@ -197,6 +195,9 @@ export const NorthIndianChart: React.FC<NorthIndianChartProps> = ({
                   fill={isLagnaHouse ? 'url(#lagnaDiamondHighlight)' : isHovered ? '#1e293b' : 'url(#northDiamondGrad)'}
                   stroke={isLagnaHouse ? '#a855f7' : isHovered ? '#64748b' : '#334155'}
                   strokeWidth={isLagnaHouse ? '1.5' : '1'}
+                  onMouseEnter={() => setHoveredHouse(houseNum)}
+                  onMouseLeave={() => setHoveredHouse(null)}
+                  className="pointer-events-auto cursor-pointer"
                 />
 
                 {/* Sign Number (Fixed in North Indian chart: displayed in corner of each house) */}
@@ -271,14 +272,14 @@ export const NorthIndianChart: React.FC<NorthIndianChartProps> = ({
       </div>
 
       {/* Stable, Fixed-Height Interactive Footer Bar (Prevents Layout Shifting & Lag) */}
-      <div className="w-full max-w-[398px] h-8 mt-2 flex items-center justify-center text-center text-xs px-3 rounded-xl border border-slate-800/80 bg-slate-950/60 backdrop-blur-md overflow-hidden transition-colors">
+      <div className="w-full max-w-[500px] sm:max-w-[520px] h-8 mt-2 flex items-center justify-center text-center text-xs px-3 rounded-xl border border-slate-800/80 bg-slate-950/60 backdrop-blur-md overflow-hidden transition-colors">
         {hoveredHouse !== null ? (
           (() => {
             const signIdx = (baseIndex + (hoveredHouse - 1)) % 12;
             const signName = ZODIAC_NAMES[signIdx];
             const inHouse = safePlanets.filter((p) => p.house === hoveredHouse);
             return (
-              <p className="truncate text-slate-200">
+              <p className="truncate min-w-0 max-w-full text-slate-200">
                 <span className="text-amber-300 font-semibold">House {hoveredHouse}</span>:
                 <span className="text-purple-300 ml-1 font-medium">{signName}</span>
                 {inHouse.length > 0 && (
@@ -290,7 +291,7 @@ export const NorthIndianChart: React.FC<NorthIndianChartProps> = ({
             );
           })()
         ) : (
-          <p className="text-[11px] text-slate-500 truncate flex items-center gap-1.5">
+          <p className="text-[11px] text-slate-500 truncate min-w-0 max-w-full flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-slate-600 inline-block" />
             Hover over any diamond house to inspect placements
           </p>

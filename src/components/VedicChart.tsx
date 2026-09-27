@@ -57,7 +57,7 @@ export const VedicChart: React.FC<VedicChartProps> = ({
   return (
     <div className={`flex flex-col items-center w-full space-y-2.5 ${className}`}>
       {/* Chart Style & Divisional Toggles */}
-      <div className="flex items-center justify-between w-full max-w-[440px] px-1 gap-2 flex-wrap">
+      <div className="flex items-center justify-between w-full max-w-[500px] sm:max-w-[520px] px-1 gap-2 flex-wrap">
         {/* South vs North Toggle */}
         <div className="flex p-0.5 rounded-xl bg-slate-900 border border-slate-800 text-[11px]">
           <button

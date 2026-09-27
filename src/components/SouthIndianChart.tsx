@@ -119,11 +119,11 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
   const moon = safePlanets.find((p) => p.name === 'Moon');
 
   return (
-    <div className={`relative flex flex-col items-center select-none ${className}`}>
-      <div className="w-full max-w-[440px] aspect-square rounded-2xl p-1 sm:p-2 bg-slate-950/80 border border-slate-800 shadow-2xl backdrop-blur-xl">
+    <div className={`relative flex flex-col items-center select-none w-full ${className}`}>
+      <div className="w-full max-w-[500px] sm:max-w-[520px] aspect-square rounded-2xl p-1 sm:p-2 bg-slate-950/80 border border-slate-800 shadow-2xl backdrop-blur-xl">
         <svg
           viewBox={`0 0 ${viewBoxSize} ${viewBoxSize}`}
-          className="w-full h-full font-sans"
+          className="w-full h-full font-sans block"
           style={{ shapeRendering: 'geometricPrecision' }}
         >
           <defs>
@@ -159,6 +159,7 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
             stroke="#334155"
             strokeWidth="1.5"
             rx={12}
+            className="pointer-events-none"
           />
 
           {/* 2. Central 2x2 Inactive Area (Traditional Center) */}
@@ -170,10 +171,12 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
             fill="url(#centerGlow)"
             stroke="#475569"
             strokeWidth="1.5"
+            onMouseEnter={() => setHoveredBox(null)}
+            className="cursor-default"
           />
 
           {/* Central Sacred Astrological Geometry & Info */}
-          <g transform={`translate(${cellSize * 2}, ${cellSize * 2})`} textAnchor="middle">
+          <g transform={`translate(${cellSize * 2}, ${cellSize * 2})`} textAnchor="middle" className="pointer-events-none select-none">
             {/* Subtle background sacred wheel */}
             <circle r="60" fill="none" stroke="#6366f1" strokeWidth="0.5" strokeDasharray="3 3" opacity="0.3" />
             <circle r="40" fill="none" stroke="#eab308" strokeWidth="0.5" opacity="0.25" />
@@ -243,9 +246,7 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
               <g
                 key={box.sign}
                 transform={`translate(${x}, ${y})`}
-                className="cursor-pointer"
-                onMouseEnter={() => setHoveredBox(box.signIndex)}
-                onMouseLeave={() => setHoveredBox(null)}
+                className="pointer-events-none"
               >
                 {/* Box Background */}
                 <rect
@@ -256,6 +257,9 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
                   fill={isLagnaBox ? 'url(#lagnaHighlight)' : isHovered ? '#1e293b' : 'url(#boxGradient)'}
                   stroke={isLagnaBox ? '#a855f7' : isHovered ? '#64748b' : '#334155'}
                   strokeWidth={isLagnaBox ? '2' : '1'}
+                  onMouseEnter={() => setHoveredBox(box.signIndex)}
+                  onMouseLeave={() => setHoveredBox(null)}
+                  className="pointer-events-auto cursor-pointer"
                 />
 
                 {/* Lagna Corner Diagonal Ribbon Marker (Traditional) */}
@@ -382,7 +386,7 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
       </div>
 
       {/* Stable, Fixed-Height Interactive Footer Bar (Prevents Layout Shifting & Lag) */}
-      <div className="w-full max-w-[440px] h-8 mt-2 flex items-center justify-center text-center text-xs px-3 rounded-xl border border-slate-800/80 bg-slate-950/60 backdrop-blur-md overflow-hidden transition-colors">
+      <div className="w-full max-w-[500px] sm:max-w-[520px] h-8 mt-2 flex items-center justify-center text-center text-xs px-3 rounded-xl border border-slate-800/80 bg-slate-950/60 backdrop-blur-md overflow-hidden transition-colors">
         {hoveredBox !== null ? (
           (() => {
             const box = SOUTH_INDIAN_BOXES.find((b) => b.signIndex === hoveredBox);
@@ -390,7 +394,7 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
             const hNum = ((box.signIndex - lagnaSignIndex + 12) % 12) + 1;
             const inSign = safePlanets.filter((p) => p.sign.toLowerCase() === box.sign.toLowerCase());
             return (
-              <p className="truncate text-slate-200">
+              <p className="truncate min-w-0 max-w-full text-slate-200">
                 <span className="text-amber-300 font-semibold">{box.sign} ({language === 'ta' ? box.tamil : box.sanskrit})</span>:
                 <span className="text-purple-300 font-medium ml-1">H{hNum} - {BHAVA_NAMES[hNum]}</span>
                 {inSign.length > 0 && (
@@ -402,7 +406,7 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
             );
           })()
         ) : (
-          <p className="text-[11px] text-slate-500 truncate flex items-center gap-1.5">
+          <p className="text-[11px] text-slate-500 truncate min-w-0 max-w-full flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-slate-600 inline-block" />
             {language === 'ta'
               ? 'விவரங்களை காண ஏதேனும் வீட்டின் மேல் சுட்டியை நகர்த்தவும்'
