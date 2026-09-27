@@ -102,9 +102,9 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
 
   const glyphMap = language === 'ta' ? PLANET_GLYPHS_TA : PLANET_GLYPHS;
 
-  // SVG dimensions
-  const viewBoxSize = 440;
-  const cellSize = viewBoxSize / 4; // 110px per cell
+  // SVG dimensions: 480x480 for generous 120px cell space
+  const viewBoxSize = 480;
+  const cellSize = viewBoxSize / 4; // 120px per cell
 
   const safeLagna = lagna || { sign: 'Aries', degree: 0, formattedDegree: "0°00' Aries" };
   const safePlanets = planets || [];
@@ -242,6 +242,10 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
               (p) => p.sign.toLowerCase() === box.sign.toLowerCase()
             );
 
+            const count = boxPlanets.length;
+            const rowHeight = count >= 6 ? 14 : count === 5 ? 15 : 16.5;
+            const startY = count >= 6 ? 31 : count === 5 ? 32 : 34;
+
             return (
               <g
                 key={box.sign}
@@ -265,120 +269,106 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
                 {/* Lagna Corner Diagonal Ribbon Marker (Traditional) */}
                 {isLagnaBox && (
                   <path
-                    d={`M 1 1 L 28 1 L 1 28 Z`}
+                    d="M 1 1 L 22 1 L 1 22 Z"
                     fill="#a855f7"
-                    opacity="0.8"
+                    opacity="0.85"
                   />
                 )}
 
-                {/* Sign Label (e.g. MESHA / ARI or மேஷம்) */}
+                {/* Header: Sign Name (Left Channel) */}
                 <text
-                  x={isLagnaBox ? 32 : 6}
-                  y={12}
-                  fill="#64748b"
+                  x={isLagnaBox ? 25 : 6}
+                  y={13}
+                  fill={isLagnaBox ? '#e2e8f0' : '#94a3b8'}
                   fontSize="8.5"
                   fontWeight="600"
-                  letterSpacing="0.5"
+                  letterSpacing="0.3"
                 >
-                  {language === 'ta' ? box.tamil : `${box.abbr} • ${box.sanskrit}`}
+                  {language === 'ta' ? box.tamil : box.sign}
                 </text>
 
-                {/* House Number relative to Lagna (H1 - H12) */}
+                {/* Header: House Number / Lagna Status (Right Channel - Never Collides) */}
                 <text
-                  x={cellSize - 7}
-                  y={12}
+                  x={cellSize - 6}
+                  y={13}
                   fill={isLagnaBox ? '#fbbf24' : '#64748b'}
                   fontSize="8.5"
                   fontWeight="bold"
                   textAnchor="end"
                 >
-                  {isLagnaBox ? (language === 'ta' ? 'லக்' : 'ASC • H1') : `H${houseNumber}`}
+                  {isLagnaBox ? (language === 'ta' ? 'லக் • H1' : 'ASC • H1') : `H${houseNumber}`}
                 </text>
 
-                {/* Lagna Identifier inside the box */}
-                {isLagnaBox && (
-                  <g transform="translate(6, 26)">
-                    <rect
-                      x="0"
-                      y="-8"
-                      width={language === 'ta' ? 44 : 54}
-                      height="13"
-                      rx="3"
-                      fill="#9333ea"
-                      opacity="0.3"
-                      stroke="#c084fc"
-                      strokeWidth="0.7"
-                    />
-                    <text
-                      x={language === 'ta' ? 22 : 27}
-                      y="1.5"
-                      fill="#fef08a"
-                      fontSize="9"
-                      fontWeight="bold"
-                      textAnchor="middle"
-                    >
-                      {language === 'ta' ? 'லக்னம்' : 'LAGNA'}
-                    </text>
-                  </g>
-                )}
+                {/* Divider Line */}
+                <line
+                  x1="4"
+                  y1="19"
+                  x2={cellSize - 4}
+                  y2="19"
+                  stroke={isLagnaBox ? '#a855f7' : '#334155'}
+                  strokeWidth="0.6"
+                  strokeOpacity={isLagnaBox ? 0.6 : 0.4}
+                />
 
-                {/* List of Planets residing in this House/Sign */}
-                <g transform={`translate(6, ${isLagnaBox ? 44 : 26})`}>
-                  {boxPlanets.length === 0 ? (
-                    <text x="3" y="14" fill="#334155" fontSize="9" fontStyle="italic">
-                      -
-                    </text>
-                  ) : (
-                    boxPlanets.map((planet, pIdx) => {
-                      // Compact 2-column if 4 or more planets in one sign (stellium)
-                      const isMultiCol = boxPlanets.length >= 4;
-                      const colX = isMultiCol && pIdx >= 3 ? 50 : 0;
-                      const rowY = (isMultiCol && pIdx >= 3 ? pIdx - 3 : pIdx) * 15;
+                {/* Planets residing in this House/Sign - Single-Column Clean Channel Layout */}
+                {boxPlanets.length === 0 ? (
+                  <text
+                    x={cellSize / 2}
+                    y={cellSize / 2 + 8}
+                    fill="#334155"
+                    fontSize="11"
+                    textAnchor="middle"
+                  >
+                    -
+                  </text>
+                ) : (
+                  boxPlanets.map((planet, pIdx) => {
+                    const py = startY + pIdx * rowHeight;
+                    const glyph = glyphMap[planet.name] || planet.name.substring(0, 2);
+                    const color = PLANET_COLORS[planet.name] || '#e2e8f0';
 
-                      const glyph = glyphMap[planet.name] || planet.name.substring(0, 2);
-                      const color = PLANET_COLORS[planet.name] || '#e2e8f0';
+                    return (
+                      <g key={planet.name}>
+                        {/* Channel 1: Planet Glyph (Left Aligned) */}
+                        <text
+                          x="5"
+                          y={py}
+                          fill={color}
+                          fontSize="8.5"
+                          fontWeight="bold"
+                        >
+                          {glyph}
+                        </text>
 
-                      return (
-                        <g key={planet.name} transform={`translate(${colX}, ${rowY})`}>
-                          {/* Planet Symbol & Name */}
+                        {/* Channel 2: Degree (Right Aligned before (R)) */}
+                        <text
+                          x={planet.isRetrograde ? cellSize - 22 : cellSize - 5}
+                          y={py}
+                          fill="#cbd5e1"
+                          fontSize="8"
+                          fontFamily="monospace"
+                          textAnchor="end"
+                        >
+                          {Math.floor(planet.signDegree)}°{Math.floor((planet.signDegree % 1) * 60).toString().padStart(2, '0')}'
+                        </text>
+
+                        {/* Channel 3: Retrograde Tag (R) (Rightmost Edge) */}
+                        {planet.isRetrograde && (
                           <text
-                            x="2"
-                            y="8"
-                            fill={color}
-                            fontSize="9.5"
+                            x={cellSize - 4}
+                            y={py}
+                            fill="#f43f5e"
+                            fontSize="7.5"
                             fontWeight="bold"
+                            textAnchor="end"
                           >
-                            {glyph}
+                            (R)
                           </text>
-
-                          {/* Degree */}
-                          <text
-                            x={isMultiCol ? 34 : 44}
-                            y="8"
-                            fill="#cbd5e1"
-                            fontSize="8.5"
-                            fontFamily="monospace"
-                          >
-                            {Math.floor(planet.signDegree)}°{Math.floor((planet.signDegree % 1) * 60).toString().padStart(2, '0')}'
-                          </text>
-
-                          {/* Retrograde Tag (R) */}
-                          {planet.isRetrograde && (
-                            <text
-                              x={isMultiCol ? 45 : 82}
-                              y="8"
-                              fill="#f43f5e"
-                              fontSize="8"
-                              fontWeight="bold"
-                            >
-                              (R)
-                            </text>
-                          )}
-                        </g>
-                      );
-                    })
-                  )}
-                </g>
+                        )}
+                      </g>
+                    );
+                  })
+                )}
               </g>
             );
           })}
