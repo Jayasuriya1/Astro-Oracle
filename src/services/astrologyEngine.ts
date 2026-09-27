@@ -16,6 +16,7 @@ import type {
   PoruthamItem
 } from '../types/astrology';
 import { storageService } from './storageService';
+import { getTimezoneOffsetForLocation } from './locationService';
 
 // Zodiac signs list
 export const ZODIAC_SIGNS = [
@@ -252,7 +253,7 @@ export function getNavamshaSign(
   signIndex: number,
   signDegree: number
 ): { sign: string; signIndex: number; pada: number } {
-  const pada = Math.min(8, Math.floor(signDegree / (30 / 9)));
+  const pada = Math.min(8, Math.max(0, Math.floor((signDegree + 1e-9) / (30 / 9))));
   let baseSignIndex = 0;
   const element = signIndex % 4; // 0: Fire, 1: Earth, 2: Air, 3: Water
   if (element === 0) baseSignIndex = 0; // Aries
@@ -473,6 +474,95 @@ const RAJJU_GROUP: Record<string, string> = {
   Shatabhisha: 'Kantha', 'Purva Bhadrapada': 'Udara', 'Uttara Bhadrapada': 'Kati', Revati: 'Pada'
 };
 
+const NAKSHATRA_YONI: Record<string, { animal: string; gender: 'Male' | 'Female' }> = {
+  Ashwini: { animal: 'Horse', gender: 'Male' },
+  Bharani: { animal: 'Elephant', gender: 'Female' },
+  Krittika: { animal: 'Goat', gender: 'Female' },
+  Rohini: { animal: 'Serpent', gender: 'Male' },
+  Mrigashira: { animal: 'Serpent', gender: 'Female' },
+  Ardra: { animal: 'Dog', gender: 'Female' },
+  Punarvasu: { animal: 'Cat', gender: 'Female' },
+  Pushya: { animal: 'Goat', gender: 'Male' },
+  Ashlesha: { animal: 'Cat', gender: 'Male' },
+  Magha: { animal: 'Rat', gender: 'Male' },
+  'Purva Phalguni': { animal: 'Rat', gender: 'Female' },
+  'Uttara Phalguni': { animal: 'Cow', gender: 'Male' },
+  Hasta: { animal: 'Buffalo', gender: 'Female' },
+  Chitra: { animal: 'Tiger', gender: 'Female' },
+  Swati: { animal: 'Buffalo', gender: 'Male' },
+  Vishakha: { animal: 'Tiger', gender: 'Male' },
+  Anuradha: { animal: 'Deer', gender: 'Female' },
+  Jyeshtha: { animal: 'Deer', gender: 'Male' },
+  Mula: { animal: 'Dog', gender: 'Male' },
+  'Purva Ashadha': { animal: 'Monkey', gender: 'Male' },
+  'Uttara Ashadha': { animal: 'Mongoose', gender: 'Male' },
+  Shravana: { animal: 'Monkey', gender: 'Female' },
+  Dhanishta: { animal: 'Lion', gender: 'Female' },
+  Shatabhisha: { animal: 'Horse', gender: 'Female' },
+  'Purva Bhadrapada': { animal: 'Lion', gender: 'Male' },
+  'Uttara Bhadrapada': { animal: 'Cow', gender: 'Female' },
+  Revati: { animal: 'Elephant', gender: 'Male' }
+};
+
+const INIMICAL_YONI_PAIRS = [
+  ['Horse', 'Buffalo'],
+  ['Elephant', 'Lion'],
+  ['Goat', 'Monkey'],
+  ['Serpent', 'Mongoose'],
+  ['Dog', 'Deer'],
+  ['Cat', 'Rat'],
+  ['Cow', 'Tiger']
+];
+
+const SIGN_LORDS: Record<string, string> = {
+  Aries: 'Mars', Taurus: 'Venus', Gemini: 'Mercury', Cancer: 'Moon',
+  Leo: 'Sun', Virgo: 'Mercury', Libra: 'Venus', Scorpio: 'Mars',
+  Sagittarius: 'Jupiter', Capricorn: 'Saturn', Aquarius: 'Saturn', Pisces: 'Jupiter'
+};
+
+const PLANET_FRIENDS: Record<string, { friends: string[]; neutrals: string[]; enemies: string[] }> = {
+  Sun: { friends: ['Moon', 'Mars', 'Jupiter'], neutrals: ['Mercury'], enemies: ['Venus', 'Saturn'] },
+  Moon: { friends: ['Sun', 'Mercury'], neutrals: ['Mars', 'Jupiter', 'Venus', 'Saturn'], enemies: [] },
+  Mars: { friends: ['Sun', 'Moon', 'Jupiter'], neutrals: ['Venus', 'Saturn'], enemies: ['Mercury'] },
+  Mercury: { friends: ['Sun', 'Venus'], neutrals: ['Mars', 'Jupiter', 'Saturn'], enemies: ['Moon'] },
+  Jupiter: { friends: ['Sun', 'Moon', 'Mars'], neutrals: ['Saturn'], enemies: ['Mercury', 'Venus'] },
+  Venus: { friends: ['Mercury', 'Saturn'], neutrals: ['Mars', 'Jupiter'], enemies: ['Sun', 'Moon'] },
+  Saturn: { friends: ['Mercury', 'Venus'], neutrals: ['Jupiter'], enemies: ['Sun', 'Moon', 'Mars'] }
+};
+
+const VASHYA_MAP: Record<string, string[]> = {
+  Aries: ['Leo', 'Scorpio'],
+  Taurus: ['Cancer', 'Libra'],
+  Gemini: ['Virgo'],
+  Cancer: ['Scorpio', 'Sagittarius'],
+  Leo: ['Libra'],
+  Virgo: ['Gemini', 'Pisces'],
+  Libra: ['Capricorn', 'Virgo'],
+  Scorpio: ['Cancer'],
+  Sagittarius: ['Pisces'],
+  Capricorn: ['Aries', 'Aquarius'],
+  Aquarius: ['Aries'],
+  Pisces: ['Capricorn']
+};
+
+const VEDHA_PAIRS = [
+  ['Ashwini', 'Jyeshtha'],
+  ['Bharani', 'Anuradha'],
+  ['Krittika', 'Vishakha'],
+  ['Rohini', 'Swati'],
+  ['Ardra', 'Shravana'],
+  ['Punarvasu', 'Uttara Ashadha'],
+  ['Pushya', 'Purva Ashadha'],
+  ['Ashlesha', 'Mula'],
+  ['Magha', 'Revati'],
+  ['Purva Phalguni', 'Uttara Bhadrapada'],
+  ['Uttara Phalguni', 'Purva Bhadrapada'],
+  ['Hasta', 'Shatabhisha'],
+  ['Mrigashira', 'Chitra'],
+  ['Chitra', 'Dhanishta'],
+  ['Mrigashira', 'Dhanishta']
+];
+
 export function calculatePorutham(
   profile1: { name: string; moonSign: string; nakshatra: string; pada: number },
   profile2: { name: string; moonSign: string; nakshatra: string; pada: number }
@@ -484,10 +574,9 @@ export function calculatePorutham(
   const n2 = idx2 >= 0 ? idx2 : 0;
 
   const countFrom1to2 = ((n2 - n1 + 27) % 27) + 1;
-
   const items: PoruthamItem[] = [];
 
-  // 1. Dina Porutham (Health & Vitality)
+  // 1. Dina Porutham (Health & Vitality - Tara Bala)
   const dinaRem = countFrom1to2 % 9;
   const isDinaGood = [2, 4, 6, 8, 9, 0].includes(dinaRem);
   items.push({
@@ -554,14 +643,34 @@ export function calculatePorutham(
   });
 
   // 5. Yoni Porutham (Physical & Sexual Harmony)
+  const yoni1 = NAKSHATRA_YONI[profile1.nakshatra] || { animal: 'Horse', gender: 'Male' };
+  const yoni2 = NAKSHATRA_YONI[profile2.nakshatra] || { animal: 'Elephant', gender: 'Female' };
+  const isEnemyYoniPair = INIMICAL_YONI_PAIRS.some(
+    ([a, b]) => (a === yoni1.animal && b === yoni2.animal) || (a === yoni2.animal && b === yoni1.animal)
+  );
+
+  let yoniScore = 0.5;
+  let yoniStatus: 'Compatible' | 'Moderate' | 'Incompatible' = 'Moderate';
+  if (isEnemyYoniPair) {
+    yoniScore = 0;
+    yoniStatus = 'Incompatible';
+  } else if (yoni1.animal === yoni2.animal) {
+    yoniScore = 1;
+    yoniStatus = 'Compatible';
+  } else {
+    yoniScore = 0.75;
+    yoniStatus = 'Compatible';
+  }
   items.push({
     id: 'yoni',
     name: 'Yoni Porutham',
     sanskrit: 'யோனிப் பொருத்தம்',
-    status: 'Compatible',
-    score: 1,
+    status: yoniStatus,
+    score: yoniScore,
     maxScore: 1,
-    description: 'Mutual physical attraction, sexual affinity, and emotional warmth.'
+    description: isEnemyYoniPair
+      ? `Inimical Yoni pair (${yoni1.animal} vs ${yoni2.animal}) requiring physical/emotional adaptability.`
+      : `Harmonious Yoni affinity (${yoni1.animal} & ${yoni2.animal}) fostering deep physical and emotional warmth.`
   });
 
   // 6. Rasi Porutham (Family & Mental Bond)
@@ -581,26 +690,51 @@ export function calculatePorutham(
       : 'Growth through open communication and understanding differences.'
   });
 
-  // 7. Rasyadhipathi (Lord Friendship)
+  // 7. Rasyadhipathi Porutham (Lord Friendship)
+  const lord1 = SIGN_LORDS[profile1.moonSign] || 'Mars';
+  const lord2 = SIGN_LORDS[profile2.moonSign] || 'Venus';
+  const pf1 = PLANET_FRIENDS[lord1];
+  const pf2 = PLANET_FRIENDS[lord2];
+
+  let rasyadhipathiScore = 0.5;
+  let rasyadhipathiStatus: 'Compatible' | 'Moderate' | 'Incompatible' = 'Moderate';
+  if (lord1 === lord2) {
+    rasyadhipathiScore = 1;
+    rasyadhipathiStatus = 'Compatible';
+  } else if (pf1?.friends.includes(lord2) && pf2?.friends.includes(lord1)) {
+    rasyadhipathiScore = 1;
+    rasyadhipathiStatus = 'Compatible';
+  } else if (pf1?.enemies.includes(lord2) && pf2?.enemies.includes(lord1)) {
+    rasyadhipathiScore = 0;
+    rasyadhipathiStatus = 'Incompatible';
+  } else {
+    rasyadhipathiScore = 0.75;
+    rasyadhipathiStatus = 'Compatible';
+  }
   items.push({
     id: 'rasyadhipathi',
     name: 'Rasyadhipathi Porutham',
     sanskrit: 'ராசியாதிபதிப் பொருத்தம்',
-    status: 'Compatible',
-    score: 1,
+    status: rasyadhipathiStatus,
+    score: rasyadhipathiScore,
     maxScore: 1,
-    description: 'Rulers of both Moon signs maintain natural astrological affinity.'
+    description: `Moon sign lords (${lord1} & ${lord2}) relationship.`
   });
 
   // 8. Vashya Porutham (Mutual Attraction)
+  const isVashyaMatch =
+    (VASHYA_MAP[profile1.moonSign] || []).includes(profile2.moonSign) ||
+    (VASHYA_MAP[profile2.moonSign] || []).includes(profile1.moonSign);
   items.push({
     id: 'vashya',
     name: 'Vashya Porutham',
     sanskrit: 'வசியப் பொருத்தம்',
-    status: 'Compatible',
-    score: 1,
+    status: isVashyaMatch ? 'Compatible' : 'Moderate',
+    score: isVashyaMatch ? 1 : 0.5,
     maxScore: 1,
-    description: 'Mutual psychic fascination, genuine respect, and magnetic bond.'
+    description: isVashyaMatch
+      ? 'Mutual psychic fascination, genuine respect, and magnetic bond.'
+      : 'Standard natural affinity and mutual respect.'
   });
 
   // 9. Rajju Porutham (Longevity & Union Safeguard - CRITICAL)
@@ -620,14 +754,21 @@ export function calculatePorutham(
   });
 
   // 10. Vedha Porutham (Affliction Shield)
+  const isVedhaDosha = VEDHA_PAIRS.some(
+    ([a, b]) =>
+      (a.toLowerCase() === profile1.nakshatra.toLowerCase() && b.toLowerCase() === profile2.nakshatra.toLowerCase()) ||
+      (a.toLowerCase() === profile2.nakshatra.toLowerCase() && b.toLowerCase() === profile1.nakshatra.toLowerCase())
+  );
   items.push({
     id: 'vedha',
     name: 'Vedha Porutham',
     sanskrit: 'வேதப் பொருத்தம்',
-    status: 'Compatible',
-    score: 1,
+    status: isVedhaDosha ? 'Incompatible' : 'Compatible',
+    score: isVedhaDosha ? 0 : 1,
     maxScore: 1,
-    description: 'No inimical piercing (Vedha) between birth constellations.'
+    description: isVedhaDosha
+      ? `Vedha (inimical star affliction) detected between ${profile1.nakshatra} & ${profile2.nakshatra}.`
+      : 'No inimical piercing (Vedha) between birth constellations.'
   });
 
   const totalScore = items.reduce((acc, it) => acc + it.score, 0);
@@ -686,12 +827,34 @@ class AstrologyEngineService {
     return this.swe!;
   }
 
-  // Convert Date and Time to Universal Time Julian Day
-  private getJulianDay(dateStr: string, timeStr: string, swe: SwissEph): number {
+  // Convert Date and Local Time to Universal Time Julian Day (using Timezone Offset)
+  private getJulianDay(dateStr: string, timeStr: string, timezoneOffset: number, swe: SwissEph): number {
     const [year, month, day] = dateStr.split('-').map(Number);
     const [hours, minutes] = timeStr.split(':').map(Number);
-    const decimalHours = hours + minutes / 60;
-    return swe.julday(year, month, day, decimalHours);
+    const localDecimalHours = hours + minutes / 60;
+    
+    // Subtract timezone offset to get Universal Time (UT / GMT)
+    let utDecimalHours = localDecimalHours - timezoneOffset;
+    
+    let adjustedYear = year;
+    let adjustedMonth = month;
+    let adjustedDay = day;
+
+    if (utDecimalHours < 0) {
+      utDecimalHours += 24;
+      const prevDate = new Date(Date.UTC(year, month - 1, day - 1));
+      adjustedYear = prevDate.getUTCFullYear();
+      adjustedMonth = prevDate.getUTCMonth() + 1;
+      adjustedDay = prevDate.getUTCDate();
+    } else if (utDecimalHours >= 24) {
+      utDecimalHours -= 24;
+      const nextDate = new Date(Date.UTC(year, month - 1, day + 1));
+      adjustedYear = nextDate.getUTCFullYear();
+      adjustedMonth = nextDate.getUTCMonth() + 1;
+      adjustedDay = nextDate.getUTCDate();
+    }
+
+    return swe.julday(adjustedYear, adjustedMonth, adjustedDay, utDecimalHours);
   }
 
   // Get current UTC Julian Day
@@ -707,10 +870,11 @@ class AstrologyEngineService {
   // Calculate full astrology engine data
   async calculateAll(profile: UserProfile): Promise<CalculatedAstrologyData> {
     const swe = await this.init();
-
-    // 1. Julian day for user's birth
-    const birthJd = this.getJulianDay(profile.birthDate, profile.birthTime, swe);
     const { latitude, longitude } = profile.birthCoordinates;
+    const tzOffset = profile.timezoneOffset ?? getTimezoneOffsetForLocation(latitude, longitude, profile.birthCoordinates.placeName || profile.currentCity);
+
+    // 1. Julian day for user's birth in Universal Time (UT)
+    const birthJd = this.getJulianDay(profile.birthDate, profile.birthTime, tzOffset, swe);
 
     // 2. WESTERN TROPICAL CHART
     const tropicalHousesRaw = swe.houses(birthJd, latitude, longitude, 'P'); // Placidus
@@ -786,6 +950,24 @@ class AstrologyEngineService {
     // Add Ketu (South Node, exactly 180° opposite Rahu)
     const ketuTropicalLon = (rahuTropicalLon + 180) % 360;
     const ketuTropicalSign = getSignInfo(ketuTropicalLon);
+    let ketuHouseNum = 1;
+    for (let h = 1; h <= 12; h++) {
+      const nextH = h === 12 ? 1 : h + 1;
+      const currentCusp = tropicalHousesRaw.cusps[h];
+      const nextCusp = tropicalHousesRaw.cusps[nextH];
+      if (nextCusp > currentCusp) {
+        if (ketuTropicalLon >= currentCusp && ketuTropicalLon < nextCusp) {
+          ketuHouseNum = h;
+          break;
+        }
+      } else {
+        if (ketuTropicalLon >= currentCusp || ketuTropicalLon < nextCusp) {
+          ketuHouseNum = h;
+          break;
+        }
+      }
+    }
+
     tropicalPlanets.push({
       id: 99,
       name: 'Ketu',
@@ -798,7 +980,7 @@ class AstrologyEngineService {
       signIndex: ketuTropicalSign.signIndex,
       signDegree: Math.round(ketuTropicalSign.signDegree * 100) / 100,
       formattedDegree: ketuTropicalSign.formattedDegree,
-      house: ((tropicalPlanets.find(p => p.name === 'Rahu')?.house || 1) + 5) % 12 + 1
+      house: ketuHouseNum
     });
 
     const westernChart: WesternChart = {
@@ -821,7 +1003,7 @@ class AstrologyEngineService {
     };
 
     // 3. VEDIC SIDEREAL CHART (LAHIRI)
-    // CRITICAL REQUIREMENT: Apply swe.setSiderealMode(swe.SE_SIDM_LAHIRI)
+    // Apply swe.setSiderealMode(swe.SE_SIDM_LAHIRI)
     (swe as any).setSiderealMode(swe.SE_SIDM_LAHIRI);
 
     const ayanamsa = swe.get_ayanamsa(birthJd);
@@ -909,10 +1091,11 @@ class AstrologyEngineService {
       nakshatraLord: ketuNakshatra.nakshatraLord
     });
 
-    // Calculate birth date object for Vimshottari Dasha
+    // Calculate exact UTC birth date object for Vimshottari Dasha
     const [bYear, bMonth, bDay] = profile.birthDate.split('-').map(Number);
     const [bHour, bMin] = profile.birthTime.split(':').map(Number);
-    const birthDateObj = new Date(bYear, (bMonth || 1) - 1, bDay || 1, bHour || 12, bMin || 0);
+    const birthUtcMs = Date.UTC(bYear, (bMonth || 1) - 1, bDay || 1, bHour || 12, bMin || 0) - (tzOffset * 3600 * 1000);
+    const birthDateObj = new Date(birthUtcMs);
 
     const siderealMoon = siderealPlanets.find((p) => p.name === 'Moon');
     const moonSiderealLon = siderealMoon ? siderealMoon.longitude : 0;

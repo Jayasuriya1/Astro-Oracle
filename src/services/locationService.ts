@@ -5,6 +5,44 @@ export interface LocationResult {
   country: string;
   latitude: number;
   longitude: number;
+  timezoneOffset?: number;
+}
+
+export function getTimezoneOffsetForLocation(latitude: number, longitude: number, country?: string): number {
+  const c = (country || '').toLowerCase();
+  // India (IST = UTC +5.5)
+  if (c.includes('india') || (latitude >= 6 && latitude <= 38 && longitude >= 68 && longitude <= 97)) {
+    return 5.5;
+  }
+  // Sri Lanka
+  if (c.includes('sri lanka') || (latitude >= 5 && latitude <= 10 && longitude >= 79 && longitude <= 82)) {
+    return 5.5;
+  }
+  // Nepal
+  if (c.includes('nepal')) {
+    return 5.75;
+  }
+  // UAE / Dubai
+  if (c.includes('united arab emirates') || c.includes('dubai') || c.includes('abu dhabi')) {
+    return 4.0;
+  }
+  // Singapore / Malaysia
+  if (c.includes('singapore') || c.includes('malaysia')) {
+    return 8.0;
+  }
+  // UK
+  if (c.includes('united kingdom') || c.includes('uk') || c.includes('england')) {
+    return 0.0;
+  }
+  // US East / Central / Mountain / Pacific
+  if (c.includes('united states') || c.includes('usa') || c.includes('us')) {
+    if (longitude < -114) return -8; // PST
+    if (longitude < -100) return -7; // MST
+    if (longitude < -85) return -6;  // CST
+    return -5; // EST
+  }
+  // Standard 15° per hour estimation rounded to nearest 0.5 hour
+  return Math.round((longitude / 15) * 2) / 2;
 }
 
 // Built-in high-precision database of major Indian cities, towns & international hubs

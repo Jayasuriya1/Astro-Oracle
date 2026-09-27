@@ -25,6 +25,7 @@ export interface UserProfile {
   birthCoordinates: Coordinates;
   currentCity: string;
   currentState: string;
+  timezoneOffset?: number; // Timezone offset in hours relative to UTC (e.g. +5.5 for IST, -5 for EST)
   color?: string; // Avatar accent color
   createdAt?: number;
 }
