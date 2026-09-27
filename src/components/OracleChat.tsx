@@ -161,16 +161,16 @@ export const OracleChat: React.FC = () => {
                 )}
 
                 <div
-                  className={`relative group max-w-[88%] sm:max-w-[78%] rounded-2xl p-3 sm:p-4 text-xs sm:text-sm leading-relaxed overflow-hidden ${
+                  className={`relative group max-w-[92%] sm:max-w-[85%] md:max-w-[80%] leading-relaxed overflow-hidden ${
                     isUser
-                      ? 'bg-gradient-to-r from-purple-700/80 to-indigo-700/80 text-white rounded-tr-sm shadow-lg shadow-purple-950/40 border border-purple-500/20'
-                      : 'bg-slate-900/90 text-slate-100 rounded-tl-sm border border-slate-800/90 shadow-xl'
+                      ? 'bg-gradient-to-r from-purple-700/80 to-indigo-700/80 text-white rounded-2xl rounded-tr-sm shadow-lg shadow-purple-950/40 border border-purple-500/20 p-3.5 sm:p-4 text-xs sm:text-sm'
+                      : 'bg-gray-900/50 backdrop-blur-md text-slate-100 rounded-xl border border-gray-800 shadow-xl p-5 sm:p-6'
                   }`}
                 >
                   {isUser ? (
                     <p className="whitespace-pre-wrap">{msg.text}</p>
                   ) : (
-                    <div className="prose prose-invert prose-xs sm:prose-sm max-w-none prose-p:my-2 prose-headings:text-amber-300 prose-headings:font-serif prose-headings:font-semibold prose-strong:text-purple-200 prose-ul:my-2 prose-li:my-0.5 prose-blockquote:border-l-amber-500 overflow-x-auto">
+                    <div className="prose prose-invert prose-sm md:prose-base max-w-none prose-headings:text-purple-300 prose-hr:border-gray-700 leading-relaxed space-y-4">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {msg.text}
                       </ReactMarkdown>
@@ -178,7 +178,7 @@ export const OracleChat: React.FC = () => {
                   )}
 
                   {/* Message timestamp and copy button */}
-                  <div className="mt-2 flex items-center justify-between text-[10px] text-slate-400/80">
+                  <div className="mt-3 pt-2 border-t border-slate-800/40 flex items-center justify-between text-[10px] sm:text-[11px] text-slate-400/80">
                     <span>
                       {new Date(msg.timestamp).toLocaleTimeString([], {
                         hour: '2-digit',
@@ -188,13 +188,19 @@ export const OracleChat: React.FC = () => {
                     {!isUser && (
                       <button
                         onClick={() => handleCopy(msg.id, msg.text)}
-                        className="opacity-0 group-hover:opacity-100 sm:opacity-0 focus:opacity-100 transition-opacity p-1 text-slate-400 hover:text-white"
+                        className="opacity-70 group-hover:opacity-100 focus:opacity-100 transition-opacity p-1 text-slate-400 hover:text-white flex items-center gap-1 text-[11px]"
                         title="Copy text"
                       >
                         {copiedId === msg.id ? (
-                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                            <span className="text-emerald-400">Copied</span>
+                          </>
                         ) : (
-                          <Copy className="w-3.5 h-3.5" />
+                          <>
+                            <Copy className="w-3.5 h-3.5" />
+                            <span>Copy</span>
+                          </>
                         )}
                       </button>
                     )}
@@ -222,9 +228,9 @@ export const OracleChat: React.FC = () => {
               <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-300 animate-spin" />
             </div>
 
-            <div className="max-w-[88%] sm:max-w-[78%] rounded-2xl rounded-tl-sm p-3 sm:p-4 text-xs sm:text-sm leading-relaxed bg-slate-900/90 text-slate-100 border border-slate-800/90 shadow-xl overflow-hidden">
+            <div className="max-w-[92%] sm:max-w-[85%] md:max-w-[80%] rounded-xl p-5 sm:p-6 bg-gray-900/50 backdrop-blur-md text-slate-100 border border-gray-800 shadow-xl overflow-hidden">
               {streamingMessage ? (
-                <div className="prose prose-invert prose-xs sm:prose-sm max-w-none prose-p:my-2 prose-headings:text-amber-300 prose-headings:font-serif prose-headings:font-semibold prose-strong:text-purple-200 overflow-x-auto">
+                <div className="prose prose-invert prose-sm md:prose-base max-w-none prose-headings:text-purple-300 prose-hr:border-gray-700 leading-relaxed space-y-4">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
                     {streamingMessage}
                   </ReactMarkdown>
