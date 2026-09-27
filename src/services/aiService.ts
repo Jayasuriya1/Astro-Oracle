@@ -5,7 +5,8 @@ import type { ChatMessage, CalculatedAstrologyData, UserProfile } from '../types
 // Construct a concise, token-efficient astrological summary instead of a massive raw JSON dump
 export function buildSystemInstruction(
   astroData: CalculatedAstrologyData,
-  profile: UserProfile
+  profile: UserProfile,
+  language: 'en' | 'ta' = 'en'
 ): string {
   const { siderealChart, tropicalChart, transits } = astroData;
   const currentDasha = siderealChart?.dashaReport?.currentMahadasha;
@@ -57,7 +58,7 @@ export function buildSystemInstruction(
 - Current Antardasha (Bhukti): ${currentDasha.lord} / ${currentAntardasha ? currentAntardasha.lord : 'Active'} (${currentAntardasha ? `${currentAntardasha.startDate} to ${currentAntardasha.endDate}` : ''})`
     : '';
 
-  return `You are an elite, highly empathetic Astrologer. You have access to BOTH the user's Western (Tropical) and Vedic (Sidereal/Lahiri) charts. Do not guess, infer, or hallucinate planetary positions.
+  let prompt = `You are an elite, highly empathetic Astrologer. You have access to BOTH the user's Western (Tropical) and Vedic (Sidereal/Lahiri) charts. Do not guess, infer, or hallucinate planetary positions.
 
 NATIVE PROFILE: ${profile.name} (Born: ${profile.birthDate} at ${profile.birthTime}, ${profile.currentCity || ''}, ${profile.currentState || ''})
 
@@ -81,6 +82,13 @@ When the user asks for remedies, dosha pariharams, or bad-phase solutions, you M
 1. TIER 1 (THE SUPREME MAHA STHALAM): Mention the foremost historical temple for this deity in India (e.g., Thirunallar for Sani, Vaitheeswaran Kovil for Sevvai, Alangudi for Guru).
 2. TIER 2 (DISTRICT ALTERNATIVE): Suggest a prominent, powerful temple dedicated to this planet near ${profile.currentCity}, ${profile.currentState}.
 3. TIER 3 (HOME/LOCAL ACTION): Provide an accessible ritual they can perform anywhere (e.g., exact Hora/Rahu Kalam timings, lighting an ellu deepam, feeding animals).`;
+
+  if (language === 'ta') {
+    prompt += `\n\nSTRICT BILINGUAL LANGUAGE DIRECTIVE:
+The user has selected Tamil. Output your entire analysis, astrological interpretations, and temple remedies in clear, respectful, natural Tamil (தமிழ் ஜோதிட பலன்கள் மற்றும் பரிகாரங்கள்). Do not transliterate; use formal Tamil astrological terminology (லக்னம், தசா புத்தி, கோச்சாரம், பரிகாரம்).`;
+  }
+
+  return prompt;
 }
 
 class AIService {
@@ -105,7 +113,7 @@ class AIService {
     try {
       const testClient = new GoogleGenAI({ apiKey: key });
       const response = await testClient.models.generateContent({
-        model: 'gemini-3.5-flash',
+        model: 'gemini-3.5-flash-lite',
         contents: 'Ping: respond with "OK"'
       });
       return !!response.text;
@@ -124,10 +132,11 @@ class AIService {
     userMessage: string,
     astroData: CalculatedAstrologyData,
     profile: UserProfile,
-    onChunk: (chunk: string) => void
+    onChunk: (chunk: string) => void,
+    language: 'en' | 'ta' = 'en'
   ): Promise<string> {
     const client = await this.getClient();
-    const systemInstruction = buildSystemInstruction(astroData, profile);
+    const systemInstruction = buildSystemInstruction(astroData, profile, language);
 
     // Keep payload fast and light: use sliding window of the last 8 messages
     const recentHistory = history.slice(-8);

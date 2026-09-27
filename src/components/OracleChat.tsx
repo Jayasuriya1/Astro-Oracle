@@ -18,7 +18,9 @@ import {
   Clock,
   ArrowRight,
   MessageSquare,
-  Download
+  Download,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 import { useAstrology } from '../context/AstrologyContext';
 import { VedicChart } from './VedicChart';
@@ -62,16 +64,37 @@ export const OracleChat: React.FC = () => {
     astrologyData,
     setActiveView,
     setIsExportOpen,
+    pendingInquiry,
+    setPendingInquiry,
     language,
     t
   } = useAstrology();
 
   const [input, setInput] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [speakingMsgId, setSpeakingMsgId] = useState<string | null>(null);
   const [mobileTab, setMobileTab] = useState<'chat' | 'chart'>('chat');
   const [leftChartSystem, setLeftChartSystem] = useState<'vedic' | 'western'>('vedic');
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+
+  // Clean up SpeechSynthesis when component unmounts
+  useEffect(() => {
+    return () => {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  // Sync pendingInquiry from interactive chart clicks
+  useEffect(() => {
+    if (pendingInquiry) {
+      setInput(pendingInquiry);
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [pendingInquiry]);
 
   // Auto-scroll to bottom smoothly
   const scrollToBottom = () => {
@@ -87,6 +110,7 @@ export const OracleChat: React.FC = () => {
     if (!input.trim() || isStreaming) return;
     const msg = input;
     setInput('');
+    if (pendingInquiry) setPendingInquiry(null);
     await sendMessage(msg);
   };
 
@@ -108,6 +132,54 @@ export const OracleChat: React.FC = () => {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  // Web Speech API Text-to-Speech Handler supporting Tamil (ta-IN) & English (en-IN)
+  const handleSpeak = (id: string, text: string) => {
+    if (!('speechSynthesis' in window)) {
+      alert(language === 'ta' ? 'உங்கள் உலாவியில் குரல் வசதி இல்லை' : 'Web Speech API is not supported in this browser.');
+      return;
+    }
+
+    if (speakingMsgId === id) {
+      window.speechSynthesis.cancel();
+      setSpeakingMsgId(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+
+    // Strip Markdown formatting for clean, natural speech pronunciation
+    const cleanText = text
+      .replace(/#{1,6}\s?/g, '')
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/\*(.*?)\*/g, '$1')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/`{1,3}[^`]*`{1,3}/g, '')
+      .replace(/[-*+]\s+/g, '')
+      .replace(/---\s*/g, '')
+      .trim();
+
+    // Dynamically detect whether text content contains Tamil script (\u0B80-\u0BFF)
+    const isTamilContent = /[\u0B80-\u0BFF]/.test(cleanText);
+    const msgLang = isTamilContent ? 'ta' : 'en';
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = msgLang === 'ta' ? 'ta-IN' : 'en-IN';
+    utterance.rate = 0.95;
+
+    // Attach matching voice if available in user's OS / browser for actual content language
+    const voices = window.speechSynthesis.getVoices();
+    const matchingVoice = voices.find(v => v.lang.toLowerCase().startsWith(msgLang));
+    if (matchingVoice) {
+      utterance.voice = matchingVoice;
+    }
+
+    utterance.onend = () => setSpeakingMsgId(null);
+    utterance.onerror = () => setSpeakingMsgId(null);
+
+    setSpeakingMsgId(id);
+    window.speechSynthesis.speak(utterance);
+  };
+
   const sidereal = astrologyData?.siderealChart;
   const currentDasha = sidereal?.dashaReport?.currentMahadasha;
   const currentAntardasha = currentDasha?.antardashas?.find((a) => a.isCurrent);
@@ -122,7 +194,7 @@ export const OracleChat: React.FC = () => {
       {/* ============================================================ */}
       {/* DESKTOP STUDIO: LEFT COLUMN (Enlarged for Prominent Chart)   */}
       {/* ============================================================ */}
-      <div className="hidden lg:flex lg:w-[48%] xl:w-[45%] flex-col h-full min-h-0 overflow-y-auto no-scrollbar space-y-3.5 pr-1.5 flex-shrink-0">
+      <div className="hidden lg:flex lg:w-[48%] xl:w-[45%] flex-col h-full min-h-0 overflow-y-auto space-y-3.5 pr-1.5 flex-shrink-0">
         {/* Studio Top Banner with Export Shortcut */}
         <div className="p-3 rounded-2xl bg-slate-900/80 border border-slate-800/90 shadow-md backdrop-blur-xl flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -285,7 +357,7 @@ export const OracleChat: React.FC = () => {
 
         {/* Detailed Nakshatra & Pada Placement Table */}
         {sidereal && (
-          <div className="rounded-xl bg-slate-900/80 border border-slate-800 overflow-hidden shadow-lg">
+          <div className="rounded-xl bg-slate-900/80 border border-slate-800 overflow-hidden shadow-lg flex-shrink-0">
             <div className="px-3 py-2 bg-slate-900/95 border-b border-slate-800 flex items-center justify-between">
               <span className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">
                 {t.nakshatraPadaCoordinates}
@@ -572,7 +644,7 @@ export const OracleChat: React.FC = () => {
                         </div>
                       )}
 
-                      {/* Message timestamp and copy button */}
+                      {/* Message timestamp, speak audio button, and copy button */}
                       <div className="mt-3 pt-2 border-t border-slate-800/40 flex items-center justify-between text-[10px] sm:text-[11px] text-slate-400/80">
                         <span>
                           {new Date(msg.timestamp).toLocaleTimeString([], {
@@ -580,25 +652,48 @@ export const OracleChat: React.FC = () => {
                             minute: '2-digit'
                           })}
                         </span>
-                        {!isUser && (
+                        <div className="flex items-center gap-2">
                           <button
-                            onClick={() => handleCopy(msg.id, msg.text)}
-                            className="opacity-70 group-hover:opacity-100 focus:opacity-100 transition-opacity p-1 text-slate-400 hover:text-white flex items-center gap-1 text-[11px]"
-                            title="Copy text"
+                            type="button"
+                            onClick={() => handleSpeak(msg.id, msg.text)}
+                            className={`opacity-80 hover:opacity-100 transition-opacity p-1 flex items-center gap-1 text-[11px] ${
+                              speakingMsgId === msg.id ? 'text-amber-300 font-bold animate-pulse' : 'text-slate-400 hover:text-white'
+                            }`}
+                            title={speakingMsgId === msg.id ? (language === 'ta' ? 'குரலை நிறுத்து' : 'Stop speaking') : (language === 'ta' ? 'வாசிக்க வைக்க' : 'Read aloud')}
                           >
-                            {copiedId === msg.id ? (
+                            {speakingMsgId === msg.id ? (
                               <>
-                                <Check className="w-3.5 h-3.5 text-emerald-400" />
-                                <span className="text-emerald-400">Copied</span>
+                                <VolumeX className="w-3.5 h-3.5 text-amber-400" />
+                                <span className="text-amber-300">{language === 'ta' ? 'நிறுத்து' : 'Stop'}</span>
                               </>
                             ) : (
                               <>
-                                <Copy className="w-3.5 h-3.5" />
-                                <span>Copy</span>
+                                <Volume2 className="w-3.5 h-3.5" />
+                                <span>{language === 'ta' ? 'கேட்க' : 'Listen'}</span>
                               </>
                             )}
                           </button>
-                        )}
+                          {!isUser && (
+                            <button
+                              type="button"
+                              onClick={() => handleCopy(msg.id, msg.text)}
+                              className="opacity-70 group-hover:opacity-100 focus:opacity-100 transition-opacity p-1 text-slate-400 hover:text-white flex items-center gap-1 text-[11px]"
+                              title="Copy text"
+                            >
+                              {copiedId === msg.id ? (
+                                <>
+                                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                                  <span className="text-emerald-400">Copied</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="w-3.5 h-3.5" />
+                                  <span>Copy</span>
+                                </>
+                              )}
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -690,7 +785,7 @@ export const OracleChat: React.FC = () => {
           {chatHistory.length > 0 && (
             <div className="flex justify-end py-1 flex-shrink-0">
               <button
-                onClick={clearChat}
+                onClick={() => setShowClearConfirm(true)}
                 className="flex items-center gap-1 text-[11px] text-slate-500 hover:text-rose-400 transition px-2 py-0.5 rounded hover:bg-slate-900"
               >
                 <Trash2 className="w-3 h-3" />
@@ -760,6 +855,62 @@ export const OracleChat: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Clear Chat History Confirmation Modal */}
+      <AnimatePresence>
+        {showClearConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowClearConfirm(false)}
+              className="fixed inset-0 bg-black/80 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="relative w-full max-w-md bg-slate-950 border border-slate-800 rounded-2xl p-5 shadow-2xl z-10 space-y-4"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400">
+                  <Trash2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Clear Chat History</h3>
+                  <p className="text-xs text-slate-400">Profile: <strong className="text-purple-300">{profile.name}</strong></p>
+                </div>
+              </div>
+
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Are you sure you want to clear all conversation history for <strong className="text-white">{profile.name}</strong>?
+                This will permanently remove all stored messages from IndexedDB for this profile.
+              </p>
+
+              <div className="flex items-center justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowClearConfirm(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-medium text-slate-300 hover:bg-slate-900 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await clearChat(profile.id);
+                    setShowClearConfirm(false);
+                  }}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white shadow-lg transition"
+                >
+                  Clear History
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

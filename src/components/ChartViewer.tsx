@@ -59,23 +59,23 @@ export const ChartViewer: React.FC<{ defaultSubTab?: 'western' | 'vedic' | 'tran
   return (
     <div className="max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6 pb-24 md:pb-8">
       {/* Header bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-4 sm:p-5 rounded-2xl bg-slate-900/60 border border-slate-800 backdrop-blur-xl">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 sm:gap-4 p-4 sm:p-5 rounded-2xl bg-slate-900/60 border border-slate-800 backdrop-blur-xl">
         <div className="min-w-0">
-          <h2 className="text-lg sm:text-xl font-bold font-serif text-white tracking-wide flex items-center gap-2 truncate">
+          <h2 className="text-base sm:text-lg lg:text-xl font-bold font-serif text-white tracking-wide flex items-center gap-2">
             <Compass className="w-5 h-5 text-amber-400 flex-shrink-0" />
-            <span>{t.astronomicalPlacements}: {profile.name}</span>
+            <span className="truncate">{t.astronomicalPlacements}: {profile.name}</span>
           </h2>
           <p className="text-[11px] sm:text-xs text-slate-400 mt-1">
             {t.born}: {profile.birthDate} {t.at} {profile.birthTime} • {profile.birthCoordinates.latitude.toFixed(2)}°N, {profile.birthCoordinates.longitude.toFixed(2)}°E
           </p>
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex items-center gap-2 w-full xl:w-auto">
           {/* Responsive Segmented Pills */}
-          <div className="w-full sm:w-auto grid grid-cols-2 sm:grid-cols-4 p-1 bg-slate-950 rounded-xl border border-slate-800 text-center gap-1">
+          <div className="w-full xl:w-auto grid grid-cols-2 sm:grid-cols-4 p-1 bg-slate-950 rounded-xl border border-slate-800 text-center gap-1">
             <button
               onClick={() => setSubTab('vedic')}
-              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap ${
                 subTab === 'vedic'
                   ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
                   : 'text-slate-400 hover:text-white'
@@ -85,7 +85,7 @@ export const ChartViewer: React.FC<{ defaultSubTab?: 'western' | 'vedic' | 'tran
             </button>
             <button
               onClick={() => setSubTab('western')}
-              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap ${
                 subTab === 'western'
                   ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm'
                   : 'text-slate-400 hover:text-white'
@@ -95,7 +95,7 @@ export const ChartViewer: React.FC<{ defaultSubTab?: 'western' | 'vedic' | 'tran
             </button>
             <button
               onClick={() => setSubTab('transits')}
-              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap ${
                 subTab === 'transits'
                   ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
                   : 'text-slate-400 hover:text-white'
@@ -105,7 +105,7 @@ export const ChartViewer: React.FC<{ defaultSubTab?: 'western' | 'vedic' | 'tran
             </button>
             <button
               onClick={() => setSubTab('porutham')}
-              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap ${
                 subTab === 'porutham'
                   ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-sm'
                   : 'text-slate-400 hover:text-white'
@@ -243,6 +243,7 @@ export const ChartViewer: React.FC<{ defaultSubTab?: 'western' | 'vedic' | 'tran
                     <th className="py-2.5 px-3 sm:py-3 sm:px-4">{t.colHouse}</th>
                     <th className="py-2.5 px-3 sm:py-3 sm:px-4">{t.colNakshatraPada}</th>
                     <th className="py-2.5 px-3 sm:py-3 sm:px-4">{t.colLord}</th>
+                    <th className="py-2.5 px-3 sm:py-3 sm:px-4 text-center">Dignity</th>
                     <th className="py-2.5 px-3 sm:py-3 sm:px-4 text-center">{t.colStatus}</th>
                   </tr>
                 </thead>
@@ -273,6 +274,45 @@ export const ChartViewer: React.FC<{ defaultSubTab?: 'western' | 'vedic' | 'tran
                         </td>
                         <td className="py-2.5 px-3 sm:py-3 sm:px-4 text-slate-400">
                           {getTranslatedPlanet(planet.nakshatraLord || '', language)}
+                        </td>
+                        <td className="py-2.5 px-3 sm:py-3 sm:px-4 text-center">
+                          <div className="flex flex-wrap items-center justify-center gap-1">
+                            {planet.dignity === 'exalted' && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-400/40 shadow-sm">
+                                {language === 'ta' ? 'உச்சம்' : 'Exalted (Ucha)'}
+                              </span>
+                            )}
+                            {planet.dignity === 'debilitated' && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-400/40 shadow-sm">
+                                {language === 'ta' ? 'நீசம்' : 'Debilitated (Neecha)'}
+                              </span>
+                            )}
+                            {planet.dignity === 'own_house' && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 shadow-sm">
+                                {language === 'ta' ? 'ஆட்சி' : 'Own House'}
+                              </span>
+                            )}
+                            {planet.dignity === 'friendly' && (
+                              <span className="px-1.5 py-0.5 text-[10px] text-cyan-300">
+                                {language === 'ta' ? 'நட்பு' : 'Friendly'}
+                              </span>
+                            )}
+                            {planet.dignity === 'enemy' && (
+                              <span className="px-1.5 py-0.5 text-[10px] text-slate-400">
+                                {language === 'ta' ? 'பகை' : 'Enemy'}
+                              </span>
+                            )}
+                            {planet.dignity === 'neutral' && (
+                              <span className="px-1.5 py-0.5 text-[10px] text-slate-400">
+                                {language === 'ta' ? 'சமம்' : 'Neutral'}
+                              </span>
+                            )}
+                            {planet.isVargottama && (
+                              <span className="px-1.5 py-0.5 rounded bg-purple-500/25 text-purple-200 border border-purple-400/40 text-[9px] font-bold tracking-wider">
+                                VARGOTTAMA
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="py-2.5 px-3 sm:py-3 sm:px-4 text-center">
                           {planet.isRetrograde ? (

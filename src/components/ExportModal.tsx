@@ -28,7 +28,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     try {
       const element = document.getElementById(targetElementId) || document.body;
       const canvas = await html2canvas(element, {
-        scale: 2,
+        scale: 3,
         backgroundColor: '#030712',
         useCORS: true
       });

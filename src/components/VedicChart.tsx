@@ -31,13 +31,14 @@ export const VedicChart: React.FC<VedicChartProps> = ({
   defaultDivision = 'D1',
   className = ''
 }) => {
-  const { language, t } = useAstrology();
+  const { language, t, astrologyData } = useAstrology();
   const planets = propsPlanets || siderealChart?.planets || [];
   const lagna = propsLagna || siderealChart?.lagna || { sign: 'Aries', degree: 0, formattedDegree: "0°00' Aries" };
   const navamshaChart = propsNavamshaChart || siderealChart?.navamshaChart;
 
   const [chartStyle, setChartStyle] = useState<'south' | 'north'>(defaultMode);
   const [divisionalChart, setDivisionalChart] = useState<'D1' | 'D9'>(defaultDivision);
+  const [showTransits, setShowTransits] = useState<boolean>(false);
 
   // Select active dataset based on D1 or D9
   const isD9 = divisionalChart === 'D9' && !!navamshaChart;
@@ -50,13 +51,15 @@ export const VedicChart: React.FC<VedicChartProps> = ({
       }
     : lagna;
 
+  const activeTransits = showTransits ? (astrologyData?.transits?.sidereal?.planets || []) : [];
+
   const chartTitle = isD9
     ? (language === 'ta' ? 'நவாம்சம் (D9)' : 'NAVAMSHA (D9)')
     : (language === 'ta' ? 'ராசி (D1)' : 'RASI (D1)');
 
   return (
     <div className={`flex flex-col items-center w-full space-y-2.5 ${className}`}>
-      {/* Chart Style & Divisional Toggles */}
+      {/* Chart Style & Divisional & Transit Toggles */}
       <div className="flex items-center justify-between w-full max-w-[500px] sm:max-w-[520px] px-1 gap-2 flex-wrap">
         {/* South vs North Toggle */}
         <div className="flex p-0.5 rounded-xl bg-slate-900 border border-slate-800 text-[11px]">
@@ -83,6 +86,21 @@ export const VedicChart: React.FC<VedicChartProps> = ({
             {t.northIndian}
           </button>
         </div>
+
+        {/* Live Transits Overlay Toggle */}
+        <button
+          type="button"
+          onClick={() => setShowTransits(!showTransits)}
+          className={`px-2.5 py-1 rounded-xl text-[11px] font-semibold border transition flex items-center gap-1 ${
+            showTransits
+              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-sm'
+              : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
+          }`}
+          title="Overlay current live planetary transits (Gochar) on natal grid"
+        >
+          <span className={`w-2 h-2 rounded-full ${showTransits ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'}`} />
+          <span>(T) Transits</span>
+        </button>
 
         {/* D1 vs D9 Divisional Toggle */}
         <div className="flex p-0.5 rounded-xl bg-slate-900 border border-slate-800 text-[11px]">
@@ -116,6 +134,7 @@ export const VedicChart: React.FC<VedicChartProps> = ({
         <SouthIndianChart
           planets={activePlanets}
           lagna={activeLagna}
+          transitPlanets={activeTransits}
           nativeName={nativeName}
           chartTitle={chartTitle}
         />
@@ -123,6 +142,7 @@ export const VedicChart: React.FC<VedicChartProps> = ({
         <NorthIndianChart
           planets={activePlanets}
           lagna={activeLagna}
+          transitPlanets={activeTransits}
           nativeName={nativeName}
           chartTitle={chartTitle}
         />

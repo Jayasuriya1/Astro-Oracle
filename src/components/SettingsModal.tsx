@@ -54,6 +54,7 @@ export const SettingsModal: React.FC = () => {
     updateProfile,
     addProfile,
     deleteProfile,
+    clearChatForProfile,
     apiKey,
     updateApiKey,
     isCalculating,
@@ -70,6 +71,8 @@ export const SettingsModal: React.FC = () => {
   const [testMessage, setTestMessage] = useState<string>('');
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
   const [confirmDelete, setConfirmDelete] = useState<boolean>(false);
+  const [confirmClearChat, setConfirmClearChat] = useState<boolean>(false);
+  const [clearChatDone, setClearChatDone] = useState<boolean>(false);
 
   // Sync state whenever modal opens or mode changes
   useEffect(() => {
@@ -133,7 +136,7 @@ export const SettingsModal: React.FC = () => {
     try {
       await aiService.testApiKey(localApiKey);
       setTestStatus('success');
-      setTestMessage('Key validated successfully! Gemini 3.8 Flash is ready.');
+      setTestMessage('Key validated successfully! Gemini is ready.');
     } catch (err: any) {
       setTestStatus('failed');
       setTestMessage(err.message || 'Key validation failed. Please check your key.');
@@ -240,11 +243,10 @@ export const SettingsModal: React.FC = () => {
                   setSettingsModalMode('edit');
                   setFormData({ ...profile });
                 }}
-                className={`px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 ${
-                  formMode === 'edit'
+                className={`px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 ${formMode === 'edit'
                     ? 'bg-purple-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
-                }`}
+                  }`}
               >
                 <Users className="w-3.5 h-3.5" />
                 <span>Edit Active ({profile.name})</span>
@@ -271,11 +273,10 @@ export const SettingsModal: React.FC = () => {
                     color: AVATAR_COLORS[(profiles.length + 1) % AVATAR_COLORS.length]
                   });
                 }}
-                className={`px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 ${
-                  formMode === 'add_member'
+                className={`px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 ${formMode === 'add_member'
                     ? 'bg-amber-500 text-slate-950 font-semibold shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
-                }`}
+                  }`}
               >
                 <UserPlus className="w-3.5 h-3.5" />
                 <span>+ Add Member</span>
@@ -285,11 +286,10 @@ export const SettingsModal: React.FC = () => {
             <button
               type="button"
               onClick={() => setActiveTab(activeTab === 'apikey' ? 'profile' : 'apikey')}
-              className={`text-xs px-2.5 py-1.5 rounded-lg font-medium border transition flex items-center gap-1.5 ${
-                activeTab === 'apikey'
+              className={`text-xs px-2.5 py-1.5 rounded-lg font-medium border transition flex items-center gap-1.5 ${activeTab === 'apikey'
                   ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
                   : 'bg-slate-900 text-slate-300 border-slate-800 hover:border-slate-700'
-              }`}
+                }`}
             >
               <Key className="w-3.5 h-3.5 text-amber-400" />
               <span>BYOK API Key</span>
@@ -400,11 +400,10 @@ export const SettingsModal: React.FC = () => {
                         key={item.value}
                         type="button"
                         onClick={() => setFormData({ ...formData, relationship: item.value })}
-                        className={`p-2 rounded-xl text-xs font-medium border text-center transition flex flex-col items-center gap-1 ${
-                          isSelected
+                        className={`p-2 rounded-xl text-xs font-medium border text-center transition flex flex-col items-center gap-1 ${isSelected
                             ? 'bg-purple-600/30 border-purple-500 text-purple-200 shadow-sm'
                             : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
-                        }`}
+                          }`}
                       >
                         <span className="text-base">{item.icon}</span>
                         <span className="truncate w-full">{item.label}</span>
@@ -423,11 +422,10 @@ export const SettingsModal: React.FC = () => {
                       key={c}
                       type="button"
                       onClick={() => setFormData({ ...formData, color: c })}
-                      className={`w-6 h-6 rounded-full transition-transform ${
-                        formData.color === c
+                      className={`w-6 h-6 rounded-full transition-transform ${formData.color === c
                           ? 'ring-2 ring-white scale-110 shadow-lg'
                           : 'opacity-70 hover:opacity-100 hover:scale-105'
-                      }`}
+                        }`}
                       style={{ backgroundColor: c }}
                     />
                   ))}
@@ -536,39 +534,90 @@ export const SettingsModal: React.FC = () => {
                   </div>
                 </div>
 
-                {/* DELETE PROFILE OPTION (Only in edit mode when more than 1 profile exists) */}
-                {formMode === 'edit' && profiles.length > 1 && (
-                  <div className="pt-2 border-t border-slate-800/80">
-                    {!confirmDelete ? (
-                      <button
-                        type="button"
-                        onClick={() => setConfirmDelete(true)}
-                        className="text-xs text-rose-400 hover:text-rose-300 hover:underline flex items-center gap-1.5 transition"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>Delete {profile.name}'s profile...</span>
-                      </button>
-                    ) : (
-                      <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-800 text-xs text-rose-200 space-y-2">
-                        <p className="font-medium">
-                          Delete {profile.name}'s profile and all their isolated chat history & calculated charts?
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={handleDeleteCurrentProfile}
-                            className="px-3 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-semibold"
-                          >
-                            Yes, Permanently Delete
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setConfirmDelete(false)}
-                            className="px-3 py-1 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700"
-                          >
-                            Cancel
-                          </button>
+                {/* CLEAR CHAT & DELETE PROFILE OPTIONS (Edit Mode) */}
+                {formMode === 'edit' && (
+                  <div className="pt-3 border-t border-slate-800/80 space-y-3">
+                    {/* Clear Chat History Option */}
+                    <div>
+                      {clearChatDone ? (
+                        <div className="flex items-center gap-1.5 text-xs text-emerald-400">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Conversation history cleared for {profile.name}!</span>
                         </div>
+                      ) : !confirmClearChat ? (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmClearChat(true)}
+                          className="text-xs text-amber-400 hover:text-amber-300 hover:underline flex items-center gap-1.5 transition"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Clear conversation history for {profile.name}...</span>
+                        </button>
+                      ) : (
+                        <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-800/60 text-xs text-amber-200 space-y-2">
+                          <p className="font-medium">
+                            Clear all stored chat history for {profile.name}?
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                await clearChatForProfile(profile.id);
+                                setConfirmClearChat(false);
+                                setClearChatDone(true);
+                                setTimeout(() => setClearChatDone(false), 3000);
+                              }}
+                              className="px-3 py-1 rounded-lg bg-amber-600 hover:bg-amber-500 text-slate-950 font-semibold"
+                            >
+                              Clear Chat History
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setConfirmClearChat(false)}
+                              className="px-3 py-1 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Delete Profile Option (If multiple profiles exist) */}
+                    {profiles.length > 1 && (
+                      <div>
+                        {!confirmDelete ? (
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDelete(true)}
+                            className="text-xs text-rose-400 hover:text-rose-300 hover:underline flex items-center gap-1.5 transition"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Delete {profile.name}'s profile...</span>
+                          </button>
+                        ) : (
+                          <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-800 text-xs text-rose-200 space-y-2">
+                            <p className="font-medium">
+                              Delete {profile.name}'s profile and all their isolated chat history & calculated charts?
+                            </p>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={handleDeleteCurrentProfile}
+                                className="px-3 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-semibold"
+                              >
+                                Yes, Permanently Delete
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setConfirmDelete(false)}
+                                className="px-3 py-1 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

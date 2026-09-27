@@ -25,6 +25,9 @@ interface AstrologyContextType {
   setSettingsModalMode: (mode: 'edit' | 'add_member') => void;
   activeView: 'chat' | 'charts' | 'transits';
   setActiveView: (view: 'chat' | 'charts' | 'transits') => void;
+  pendingInquiry: string | null;
+  setPendingInquiry: (query: string | null) => void;
+  inspectPlacement: (promptText: string) => void;
   isExportOpen: boolean;
   setIsExportOpen: (open: boolean) => void;
   scrollToPlanet: (planetName: string) => void;
@@ -35,7 +38,8 @@ interface AstrologyContextType {
   deleteProfile: (profileId: string) => Promise<void>;
   updateApiKey: (key: string) => Promise<void>;
   sendMessage: (text: string) => Promise<void>;
-  clearChat: () => Promise<void>;
+  clearChat: (targetProfileId?: string) => Promise<void>;
+  clearChatForProfile: (profileId: string) => Promise<void>;
   recalculate: () => Promise<void>;
   clearError: () => void;
 }
@@ -55,7 +59,13 @@ export const AstrologyProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [settingsModalMode, setSettingsModalMode] = useState<'edit' | 'add_member'>('edit');
   const [activeView, setActiveView] = useState<'chat' | 'charts' | 'transits'>('chat');
+  const [pendingInquiry, setPendingInquiry] = useState<string | null>(null);
   const [isExportOpen, setIsExportOpen] = useState<boolean>(false);
+
+  const inspectPlacement = useCallback((promptText: string) => {
+    setPendingInquiry(promptText);
+    setActiveView('chat');
+  }, []);
 
   const [language, setLanguageState] = useState<Language>(() => {
     return (localStorage.getItem('astro_language') as Language) || 'en';
@@ -296,10 +306,20 @@ export const AstrologyProvider: React.FC<{ children: ReactNode }> = ({ children 
     }
   }, [profile]);
 
-  // Clear chat history for currently active profile only
-  const clearChat = useCallback(async () => {
-    setChatHistory([]);
-    await storageService.clearChatHistory(profile.id);
+  // Clear chat history for a specific profile (or active profile by default)
+  const clearChat = useCallback(async (targetProfileId?: string) => {
+    const idToClear = targetProfileId || profile.id;
+    if (idToClear === profile.id) {
+      setChatHistory([]);
+    }
+    await storageService.clearChatHistory(idToClear);
+  }, [profile.id]);
+
+  const clearChatForProfile = useCallback(async (profileId: string) => {
+    if (profileId === profile.id) {
+      setChatHistory([]);
+    }
+    await storageService.clearChatHistory(profileId);
   }, [profile.id]);
 
   // Send message to Oracle for currently active profile
@@ -353,7 +373,8 @@ export const AstrologyProvider: React.FC<{ children: ReactNode }> = ({ children 
         (chunk) => {
           accumulatedText = chunk;
           setStreamingMessage(chunk);
-        }
+        },
+        language
       );
 
       const assistantMsg: ChatMessage = {
@@ -374,7 +395,7 @@ export const AstrologyProvider: React.FC<{ children: ReactNode }> = ({ children 
       setIsStreaming(false);
       setStreamingMessage('');
     }
-  }, [apiKey, astrologyData, chatHistory, isStreaming, profile]);
+  }, [apiKey, astrologyData, chatHistory, isStreaming, language, profile]);
 
   const clearError = useCallback(() => setError(null), []);
 
@@ -399,6 +420,9 @@ export const AstrologyProvider: React.FC<{ children: ReactNode }> = ({ children 
         t,
         activeView,
         setActiveView,
+        pendingInquiry,
+        setPendingInquiry,
+        inspectPlacement,
         isExportOpen,
         setIsExportOpen,
         scrollToPlanet,
@@ -410,6 +434,7 @@ export const AstrologyProvider: React.FC<{ children: ReactNode }> = ({ children 
         updateApiKey,
         sendMessage,
         clearChat,
+        clearChatForProfile,
         recalculate,
         clearError
       }}

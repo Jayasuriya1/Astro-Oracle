@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { PlanetPosition } from '../types/astrology';
+import { useAstrology } from '../context/AstrologyContext';
 
 export interface NorthIndianChartProps {
   planets: PlanetPosition[];
@@ -8,6 +9,7 @@ export interface NorthIndianChartProps {
     degree: number;
     formattedDegree: string;
   };
+  transitPlanets?: PlanetPosition[];
   nativeName?: string;
   chartTitle?: string;
   className?: string;
@@ -45,99 +47,29 @@ const PLANET_COLORS: Record<string, string> = {
 
 // North Indian diamond coordinates & house centers (Counter-clockwise: 1 to 12)
 const HOUSES_GEOMETRY = [
-  // H1: Top Central Diamond
-  {
-    house: 1,
-    path: 'M 200 0 L 300 100 L 200 200 L 100 100 Z',
-    signPos: { x: 200, y: 175 },
-    center: { x: 200, y: 95 }
-  },
-  // H2: Top-Left Triangle
-  {
-    house: 2,
-    path: 'M 0 0 L 200 0 L 100 100 Z',
-    signPos: { x: 125, y: 35 },
-    center: { x: 100, y: 55 }
-  },
-  // H3: Left-Upper Triangle
-  {
-    house: 3,
-    path: 'M 0 0 L 100 100 L 0 200 Z',
-    signPos: { x: 35, y: 125 },
-    center: { x: 45, y: 100 }
-  },
-  // H4: Left Diamond
-  {
-    house: 4,
-    path: 'M 0 200 L 100 100 L 200 200 L 100 300 Z',
-    signPos: { x: 175, y: 200 },
-    center: { x: 95, y: 200 }
-  },
-  // H5: Left-Lower Triangle
-  {
-    house: 5,
-    path: 'M 0 200 L 100 300 L 0 400 Z',
-    signPos: { x: 35, y: 275 },
-    center: { x: 45, y: 300 }
-  },
-  // H6: Bottom-Left Triangle
-  {
-    house: 6,
-    path: 'M 0 400 L 100 300 L 200 400 Z',
-    signPos: { x: 125, y: 375 },
-    center: { x: 100, y: 345 }
-  },
-  // H7: Bottom Central Diamond
-  {
-    house: 7,
-    path: 'M 200 200 L 300 300 L 200 400 L 100 300 Z',
-    signPos: { x: 200, y: 225 },
-    center: { x: 200, y: 305 }
-  },
-  // H8: Bottom-Right Triangle
-  {
-    house: 8,
-    path: 'M 200 400 L 300 300 L 400 400 Z',
-    signPos: { x: 275, y: 375 },
-    center: { x: 300, y: 345 }
-  },
-  // H9: Right-Lower Triangle
-  {
-    house: 9,
-    path: 'M 400 200 L 300 300 L 400 400 Z',
-    signPos: { x: 365, y: 275 },
-    center: { x: 355, y: 300 }
-  },
-  // H10: Right Diamond
-  {
-    house: 10,
-    path: 'M 200 200 L 300 100 L 400 200 L 300 300 Z',
-    signPos: { x: 225, y: 200 },
-    center: { x: 305, y: 200 }
-  },
-  // H11: Right-Upper Triangle
-  {
-    house: 11,
-    path: 'M 400 0 L 400 200 L 300 100 Z',
-    signPos: { x: 365, y: 125 },
-    center: { x: 355, y: 100 }
-  },
-  // H12: Top-Right Triangle
-  {
-    house: 12,
-    path: 'M 200 0 L 400 0 L 300 100 Z',
-    signPos: { x: 275, y: 35 },
-    center: { x: 300, y: 55 }
-  }
+  { house: 1, path: 'M 200 0 L 300 100 L 200 200 L 100 100 Z', signPos: { x: 200, y: 175 }, center: { x: 200, y: 95 } },
+  { house: 2, path: 'M 0 0 L 200 0 L 100 100 Z', signPos: { x: 125, y: 35 }, center: { x: 100, y: 55 } },
+  { house: 3, path: 'M 0 0 L 100 100 L 0 200 Z', signPos: { x: 35, y: 125 }, center: { x: 45, y: 100 } },
+  { house: 4, path: 'M 0 200 L 100 100 L 200 200 L 100 300 Z', signPos: { x: 175, y: 200 }, center: { x: 95, y: 200 } },
+  { house: 5, path: 'M 0 200 L 100 300 L 0 400 Z', signPos: { x: 35, y: 275 }, center: { x: 45, y: 300 } },
+  { house: 6, path: 'M 0 400 L 100 300 L 200 400 Z', signPos: { x: 125, y: 375 }, center: { x: 100, y: 345 } },
+  { house: 7, path: 'M 200 200 L 300 300 L 200 400 L 100 300 Z', signPos: { x: 200, y: 225 }, center: { x: 200, y: 305 } },
+  { house: 8, path: 'M 200 400 L 300 300 L 400 400 Z', signPos: { x: 275, y: 375 }, center: { x: 300, y: 345 } },
+  { house: 9, path: 'M 400 200 L 300 300 L 400 400 Z', signPos: { x: 365, y: 275 }, center: { x: 355, y: 300 } },
+  { house: 10, path: 'M 200 200 L 300 100 L 400 200 L 300 300 Z', signPos: { x: 225, y: 200 }, center: { x: 305, y: 200 } },
+  { house: 11, path: 'M 400 0 L 400 200 L 300 100 Z', signPos: { x: 365, y: 125 }, center: { x: 355, y: 100 } },
+  { house: 12, path: 'M 200 0 L 400 0 L 300 100 Z', signPos: { x: 275, y: 35 }, center: { x: 300, y: 55 } }
 ];
 
 export const NorthIndianChart: React.FC<NorthIndianChartProps> = ({
   planets,
   lagna,
+  transitPlanets = [],
   nativeName = 'Native',
   chartTitle = 'RASI (D1)',
   className = ''
 }) => {
+  const { inspectPlacement } = useAstrology();
   const [hoveredHouse, setHoveredHouse] = useState<number | null>(null);
 
   const safeLagna = lagna || { sign: 'Aries', degree: 0, formattedDegree: "0°00' Aries" };
@@ -148,6 +80,18 @@ export const NorthIndianChart: React.FC<NorthIndianChartProps> = ({
     (s) => s.toLowerCase() === (safeLagna.sign || 'Aries').toLowerCase()
   );
   const baseIndex = lagnaSignIndex >= 0 ? lagnaSignIndex : 0;
+
+  const handleHouseClick = (houseNum: number, signName: string, housePlanets: PlanetPosition[]) => {
+    if (housePlanets.length === 1) {
+      const p = housePlanets[0];
+      inspectPlacement(`Explain the astrological impact of ${p.name} in House ${houseNum} (${signName})`);
+    } else if (housePlanets.length > 1) {
+      const names = housePlanets.map((p) => p.name).join(' and ');
+      inspectPlacement(`Analyze the combined planetary influence of ${names} in House ${houseNum} (${signName})`);
+    } else {
+      inspectPlacement(`Analyze the significance of House ${houseNum} (${signName}) placements and lord`);
+    }
+  };
 
   return (
     <div className={`relative flex flex-col items-center select-none w-full ${className}`}>
@@ -183,12 +127,10 @@ export const NorthIndianChart: React.FC<NorthIndianChartProps> = ({
 
             // Planets residing in this house
             const housePlanets = safePlanets.filter((p) => p.house === houseNum || (p.sign && p.sign.toLowerCase() === signName.toLowerCase()));
+            const houseTransits = transitPlanets.filter((tp) => tp.sign && tp.sign.toLowerCase() === signName.toLowerCase());
 
             return (
-              <g
-                key={houseNum}
-                className="pointer-events-none"
-              >
+              <g key={houseNum} className="pointer-events-none">
                 {/* House Shape */}
                 <path
                   d={hGeom.path}
@@ -197,10 +139,11 @@ export const NorthIndianChart: React.FC<NorthIndianChartProps> = ({
                   strokeWidth={isLagnaHouse ? '1.5' : '1'}
                   onMouseEnter={() => setHoveredHouse(houseNum)}
                   onMouseLeave={() => setHoveredHouse(null)}
-                  className="pointer-events-auto cursor-pointer"
+                  onClick={() => handleHouseClick(houseNum, signName, housePlanets)}
+                  className="pointer-events-auto cursor-pointer transition-colors"
                 />
 
-                {/* Sign Number (Fixed in North Indian chart: displayed in corner of each house) */}
+                {/* Sign Number */}
                 <text
                   x={hGeom.signPos.x}
                   y={hGeom.signPos.y}
@@ -228,7 +171,7 @@ export const NorthIndianChart: React.FC<NorthIndianChartProps> = ({
                   </text>
                 )}
 
-                {/* House Planets */}
+                {/* House Planets & Transits */}
                 <g transform={`translate(${hGeom.center.x}, ${isLagnaHouse ? hGeom.center.y - 4 : hGeom.center.y - 12})`} textAnchor="middle">
                   {housePlanets.map((planet, pIdx) => {
                     const glyph = PLANET_GLYPHS[planet.name] || planet.name.substring(0, 2);
@@ -237,7 +180,7 @@ export const NorthIndianChart: React.FC<NorthIndianChartProps> = ({
 
                     return (
                       <text
-                        key={planet.name}
+                        key={`natal-${planet.name}`}
                         y={yOffset}
                         fill={color}
                         fontSize="9"
@@ -247,6 +190,23 @@ export const NorthIndianChart: React.FC<NorthIndianChartProps> = ({
                         {planet.isRetrograde && (
                           <tspan fill="#f43f5e" fontWeight="bold"> (R)</tspan>
                         )}
+                      </text>
+                    );
+                  })}
+
+                  {houseTransits.map((tPlanet, tIdx) => {
+                    const yOffset = (housePlanets.length + tIdx) * 12;
+                    const glyph = PLANET_GLYPHS[tPlanet.name] || tPlanet.name.substring(0, 2);
+
+                    return (
+                      <text
+                        key={`transit-${tPlanet.name}`}
+                        y={yOffset}
+                        fill="#10b981"
+                        fontSize="8"
+                        fontWeight="bold"
+                      >
+                        (T) {glyph} {Math.floor(tPlanet.signDegree)}°
                       </text>
                     );
                   })}

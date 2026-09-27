@@ -13,7 +13,10 @@ import type {
   NavamshaChart,
   PanchangamData,
   PoruthamReport,
-  PoruthamItem
+  PoruthamItem,
+  AshtaKutaReport,
+  AshtaKutaItem,
+  PlanetaryDignity
 } from '../types/astrology';
 import { storageService } from './storageService';
 import { getTimezoneOffsetForLocation } from './locationService';
@@ -792,6 +795,271 @@ export function calculatePorutham(
   };
 }
 
+// ==========================================
+// 4. NORTH INDIAN ASHTA KUTA (36 GUNA) ENGINE
+// ==========================================
+const NADI_MAP: Record<string, 'Adi' | 'Madhya' | 'Antya'> = {
+  Ashwini: 'Adi', Bharani: 'Madhya', Krittika: 'Antya',
+  Rohini: 'Antya', Mrigashira: 'Madhya', Ardra: 'Adi',
+  Punarvasu: 'Adi', Pushya: 'Madhya', Ashlesha: 'Antya',
+  Magha: 'Antya', 'Purva Phalguni': 'Madhya', 'Uttara Phalguni': 'Adi',
+  Hasta: 'Adi', Chitra: 'Madhya', Swati: 'Antya',
+  Vishakha: 'Antya', Anuradha: 'Madhya', Jyeshtha: 'Adi',
+  Mula: 'Adi', 'Purva Ashadha': 'Madhya', 'Uttara Ashadha': 'Antya',
+  Shravana: 'Antya', Dhanishta: 'Madhya', Shatabhisha: 'Adi',
+  'Purva Bhadrapada': 'Adi', 'Uttara Bhadrapada': 'Madhya', Revati: 'Antya'
+};
+
+const EXALTATION_MAP: Record<string, string> = {
+  Sun: 'Aries', Moon: 'Taurus', Mars: 'Capricorn', Mercury: 'Virgo',
+  Jupiter: 'Cancer', Venus: 'Pisces', Saturn: 'Libra', Rahu: 'Taurus', Ketu: 'Scorpio'
+};
+
+const DEBILITATION_MAP: Record<string, string> = {
+  Sun: 'Libra', Moon: 'Scorpio', Mars: 'Cancer', Mercury: 'Pisces',
+  Jupiter: 'Capricorn', Venus: 'Virgo', Saturn: 'Aries', Rahu: 'Scorpio', Ketu: 'Taurus'
+};
+
+const OWN_HOUSE_MAP: Record<string, string[]> = {
+  Sun: ['Leo'], Moon: ['Cancer'], Mars: ['Aries', 'Scorpio'],
+  Mercury: ['Gemini', 'Virgo'], Jupiter: ['Sagittarius', 'Pisces'],
+  Venus: ['Taurus', 'Libra'], Saturn: ['Capricorn', 'Aquarius']
+};
+
+export function getPlanetaryDignity(
+  planetName: string,
+  sign: string
+): PlanetaryDignity {
+  if (EXALTATION_MAP[planetName] === sign) return 'exalted';
+  if (DEBILITATION_MAP[planetName] === sign) return 'debilitated';
+  if ((OWN_HOUSE_MAP[planetName] || []).includes(sign)) return 'own_house';
+  return 'neutral';
+}
+
+export function calculateAshtaKuta(
+  profile1: { name: string; moonSign: string; nakshatra: string; pada: number },
+  profile2: { name: string; moonSign: string; nakshatra: string; pada: number }
+): AshtaKutaReport {
+  const items: AshtaKutaItem[] = [];
+
+  // 1. Varna (1 Guna)
+  const VARNA_SCORES: Record<string, number> = {
+    Cancer: 4, Scorpio: 4, Pisces: 4,
+    Aries: 3, Leo: 3, Sagittarius: 3,
+    Taurus: 2, Virgo: 2, Capricorn: 2,
+    Gemini: 1, Libra: 1, Aquarius: 1
+  };
+  const v1 = VARNA_SCORES[profile1.moonSign] || 2;
+  const v2 = VARNA_SCORES[profile2.moonSign] || 2;
+  const varnaScore = v2 >= v1 ? 1 : 0;
+  items.push({
+    id: 'varna',
+    name: 'Varna Kuta (Work & Ego Alignment)',
+    sanskrit: 'वर्ण कूट',
+    kuta: 'Varna',
+    score: varnaScore,
+    maxScore: 1,
+    status: varnaScore === 1 ? 'Compatible' : 'Incompatible',
+    description: varnaScore === 1
+      ? 'Balanced spiritual and functional work roles between partners.'
+      : 'Complementary adjustment needed regarding social and spiritual duties.'
+  });
+
+  // 2. Vashya (2 Gunas)
+  const VASHYA_GROUP: Record<string, string> = {
+    Aries: 'Chatushpada', Taurus: 'Chatushpada',
+    Gemini: 'Dwipada', Cancer: 'Jalachara', Leo: 'Vanachara', Virgo: 'Dwipada',
+    Libra: 'Dwipada', Scorpio: 'Keeta', Sagittarius: 'Chatushpada',
+    Capricorn: 'Jalachara', Aquarius: 'Dwipada', Pisces: 'Jalachara'
+  };
+  const vas1 = VASHYA_GROUP[profile1.moonSign] || 'Dwipada';
+  const vas2 = VASHYA_GROUP[profile2.moonSign] || 'Dwipada';
+  let vashyaScore = 0;
+  if (vas1 === vas2) vashyaScore = 2;
+  else if (
+    (vas1 === 'Dwipada' && (vas2 === 'Chatushpada' || vas2 === 'Jalachara')) ||
+    (vas2 === 'Dwipada' && (vas1 === 'Chatushpada' || vas1 === 'Jalachara'))
+  ) {
+    vashyaScore = 1;
+  }
+  items.push({
+    id: 'vashya',
+    name: 'Vashya Kuta (Mutual Control & Attraction)',
+    sanskrit: 'वश्य कूट',
+    kuta: 'Vashya',
+    score: vashyaScore,
+    maxScore: 2,
+    status: vashyaScore === 2 ? 'Compatible' : vashyaScore === 1 ? 'Moderate' : 'Incompatible',
+    description: vashyaScore === 2
+      ? `Strong magnetic harmony (${vas1} & ${vas2}).`
+      : `Moderate psychic attraction (${vas1} & ${vas2}).`
+  });
+
+  // 3. Tara (3 Gunas)
+  const idx1 = NAKSHATRAS.findIndex((n) => n.name.toLowerCase() === profile1.nakshatra.toLowerCase());
+  const idx2 = NAKSHATRAS.findIndex((n) => n.name.toLowerCase() === profile2.nakshatra.toLowerCase());
+  const n1 = idx1 >= 0 ? idx1 : 0;
+  const n2 = idx2 >= 0 ? idx2 : 0;
+
+  const count1 = ((n2 - n1 + 27) % 27) + 1;
+  const count2 = ((n1 - n2 + 27) % 27) + 1;
+  const goodTaras = [2, 4, 6, 8, 9, 0];
+  const t1Good = goodTaras.includes(count1 % 9);
+  const t2Good = goodTaras.includes(count2 % 9);
+
+  let taraScore = 0;
+  if (t1Good && t2Good) taraScore = 3;
+  else if (t1Good || t2Good) taraScore = 1.5;
+  else taraScore = 0;
+
+  items.push({
+    id: 'tara',
+    name: 'Tara Kuta (Destiny & Auspiciousness)',
+    sanskrit: 'तारा कूट',
+    kuta: 'Tara',
+    score: taraScore,
+    maxScore: 3,
+    status: taraScore === 3 ? 'Compatible' : taraScore === 1.5 ? 'Moderate' : 'Incompatible',
+    description: taraScore === 3
+      ? 'Both birth stars are in mutual Sampat/Kshema auspicious Tara positions.'
+      : taraScore === 1.5
+      ? 'One-way favorable Tara strength; requires minor mutual support.'
+      : 'Challenging Tara placement; remedies suggested.'
+  });
+
+  // 4. Yoni (4 Gunas)
+  const yoni1 = NAKSHATRA_YONI[profile1.nakshatra] || { animal: 'Horse', gender: 'Male' };
+  const yoni2 = NAKSHATRA_YONI[profile2.nakshatra] || { animal: 'Elephant', gender: 'Female' };
+  const isEnemyYoni = INIMICAL_YONI_PAIRS.some(
+    ([a, b]) => (a === yoni1.animal && b === yoni2.animal) || (a === yoni2.animal && b === yoni1.animal)
+  );
+
+  let yoniScore = 2;
+  if (isEnemyYoni) yoniScore = 0;
+  else if (yoni1.animal === yoni2.animal) yoniScore = 4;
+  else yoniScore = 3;
+
+  items.push({
+    id: 'yoni',
+    name: 'Yoni Kuta (Physical & Biological Instinct)',
+    sanskrit: 'योनि कूट',
+    kuta: 'Yoni',
+    score: yoniScore,
+    maxScore: 4,
+    status: yoniScore >= 3 ? 'Compatible' : yoniScore >= 2 ? 'Moderate' : 'Incompatible',
+    description: isEnemyYoni
+      ? `Sworn inimical Yoni pair (${yoni1.animal} vs ${yoni2.animal}).`
+      : `Compatible Yoni affinity (${yoni1.animal} & ${yoni2.animal}).`
+  });
+
+  // 5. Graha Maitri (5 Gunas)
+  const lord1 = SIGN_LORDS[profile1.moonSign] || 'Mars';
+  const lord2 = SIGN_LORDS[profile2.moonSign] || 'Venus';
+  const pf1 = PLANET_FRIENDS[lord1];
+  const pf2 = PLANET_FRIENDS[lord2];
+
+  let maitriScore = 2.5;
+  if (lord1 === lord2) maitriScore = 5;
+  else if (pf1?.friends.includes(lord2) && pf2?.friends.includes(lord1)) maitriScore = 5;
+  else if (pf1?.friends.includes(lord2) || pf2?.friends.includes(lord1)) maitriScore = 4;
+  else if (pf1?.enemies.includes(lord2) && pf2?.enemies.includes(lord1)) maitriScore = 0;
+  else maitriScore = 3;
+
+  items.push({
+    id: 'graha_maitri',
+    name: 'Graha Maitri (Psychological & Intellectual Friendship)',
+    sanskrit: 'ग्रह मैत्री कूट',
+    kuta: 'Graha Maitri',
+    score: maitriScore,
+    maxScore: 5,
+    status: maitriScore >= 4 ? 'Compatible' : maitriScore >= 2.5 ? 'Moderate' : 'Incompatible',
+    description: `Moon lords (${lord1} & ${lord2}) planetary friendship score: ${maitriScore}/5.`
+  });
+
+  // 6. Gana (6 Gunas)
+  const gana1 = NAKSHATRA_GANAS[profile1.nakshatra] || 'Manushya';
+  const gana2 = NAKSHATRA_GANAS[profile2.nakshatra] || 'Manushya';
+  let ganaScore = 0;
+  if (gana1 === gana2) ganaScore = 6;
+  else if ((gana1 === 'Deva' && gana2 === 'Manushya') || (gana1 === 'Manushya' && gana2 === 'Deva')) ganaScore = 5;
+  else if (gana1 === 'Deva' && gana2 === 'Rakshasa') ganaScore = 1;
+  else ganaScore = 0;
+
+  items.push({
+    id: 'gana',
+    name: 'Gana Kuta (Temperament & Life Outlook)',
+    sanskrit: 'गण कूट',
+    kuta: 'Gana',
+    score: ganaScore,
+    maxScore: 6,
+    status: ganaScore >= 5 ? 'Compatible' : ganaScore >= 1 ? 'Moderate' : 'Incompatible',
+    description: `Gana alignment (${gana1} & ${gana2}): ${ganaScore}/6.`
+  });
+
+  // 7. Bhakoot (7 Gunas)
+  const signIdx1 = ZODIAC_SIGNS.findIndex((s) => s.toLowerCase() === profile1.moonSign.toLowerCase());
+  const signIdx2 = ZODIAC_SIGNS.findIndex((s) => s.toLowerCase() === profile2.moonSign.toLowerCase());
+  const signDist = ((signIdx2 - signIdx1 + 12) % 12) + 1;
+  const isBhakootGood = [1, 7, 3, 4, 10, 11].includes(signDist);
+  const isLordsFriendly = lord1 === lord2 || (pf1?.friends.includes(lord2) && pf2?.friends.includes(lord1));
+
+  let bhakootScore = 0;
+  if (isBhakootGood || isLordsFriendly) bhakootScore = 7;
+  else bhakootScore = 0;
+
+  items.push({
+    id: 'bhakoot',
+    name: 'Bhakoot Kuta (Emotional & Financial Wealth)',
+    sanskrit: 'भकूट कूट',
+    kuta: 'Bhakoot',
+    score: bhakootScore,
+    maxScore: 7,
+    status: bhakootScore === 7 ? 'Compatible' : 'Incompatible',
+    description: bhakootScore === 7
+      ? `Favorable Moon sign distance (${signDist}th house span) - No Bhakoot Dosha.`
+      : `Unfavorable ${signDist}th house span (Bhakoot Dosha); lord friendship mitigation recommended.`
+  });
+
+  // 8. Nadi (8 Gunas)
+  const nadi1 = NADI_MAP[profile1.nakshatra] || 'Adi';
+  const nadi2 = NADI_MAP[profile2.nakshatra] || 'Antya';
+  const isNadiMatch = nadi1 !== nadi2;
+  const nadiScore = isNadiMatch ? 8 : 0;
+
+  items.push({
+    id: 'nadi',
+    name: 'Nadi Kuta (Health, Genetics & Lineage - Highest Weight)',
+    sanskrit: 'नाड़ी कूट',
+    kuta: 'Nadi',
+    score: nadiScore,
+    maxScore: 8,
+    status: isNadiMatch ? 'Compatible' : 'Incompatible',
+    description: isNadiMatch
+      ? `Different Nadis (${nadi1} & ${nadi2}) - Perfect genetic & nervous constitution compatibility.`
+      : `Same Nadi (${nadi1}) - Nadi Dosha detected; classical remedies advised.`
+  });
+
+  const totalScore = items.reduce((acc, it) => acc + it.score, 0);
+  const maxScore = 36;
+  const percentage = Math.round((totalScore / maxScore) * 100);
+
+  let verdict: 'Excellent Match (Uttam)' | 'Good Match (Madhyam)' | 'Average Match' | 'Challenging (Nadi/Bhakoot Dosha)' = 'Good Match (Madhyam)';
+  if (totalScore >= 28) verdict = 'Excellent Match (Uttam)';
+  else if (totalScore >= 18) verdict = 'Good Match (Madhyam)';
+  else if (totalScore >= 12) verdict = 'Average Match';
+  else verdict = 'Challenging (Nadi/Bhakoot Dosha)';
+
+  return {
+    profile1,
+    profile2,
+    totalScore,
+    maxScore,
+    percentage,
+    verdict,
+    items
+  };
+}
+
 class AstrologyEngineService {
   private swe: SwissEph | null = null;
   private isInitialized = false;
@@ -1106,6 +1374,13 @@ class AstrologyEngineService {
       sign: lagnaSignInfo.sign,
       degree: siderealLagnaDeg,
       formattedDegree: lagnaSignInfo.formattedDegree
+    });
+
+    // Annotate Dignity & Vargottama for each Sidereal planet
+    siderealPlanets.forEach((p) => {
+      p.dignity = getPlanetaryDignity(p.name, p.sign);
+      const navP = navamshaChart.planets.find((np) => np.name === p.name);
+      p.isVargottama = navP ? navP.sign === p.sign : false;
     });
 
     const vedicChart: VedicChart = {

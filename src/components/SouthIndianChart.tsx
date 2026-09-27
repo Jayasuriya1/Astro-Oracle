@@ -12,6 +12,7 @@ export interface SouthIndianChartProps {
     nakshatra?: string;
     pada?: number;
   };
+  transitPlanets?: PlanetPosition[];
   nativeName?: string;
   chartTitle?: string;
   className?: string;
@@ -93,11 +94,12 @@ const BHAVA_NAMES: Record<number, string> = {
 export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
   planets,
   lagna,
+  transitPlanets = [],
   nativeName = 'Native',
   chartTitle = 'RASI (D1)',
   className = ''
 }) => {
-  const { language } = useAstrology();
+  const { language, inspectPlacement } = useAstrology();
   const [hoveredBox, setHoveredBox] = useState<number | null>(null);
 
   const glyphMap = language === 'ta' ? PLANET_GLYPHS_TA : PLANET_GLYPHS;
@@ -117,6 +119,24 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
 
   // Moon details
   const moon = safePlanets.find((p) => p.name === 'Moon');
+
+  const handleBoxClick = (boxSign: string, houseNumber: number, boxPlanets: PlanetPosition[]) => {
+    if (boxPlanets.length === 1) {
+      const p = boxPlanets[0];
+      if (p.name === 'Ketu') {
+        inspectPlacement(`Explain the karmic impact of Ketu in my ${houseNumber}${houseNumber === 1 ? 'st' : houseNumber === 2 ? 'nd' : houseNumber === 3 ? 'rd' : 'th'} House (${boxSign})`);
+      } else if (p.name === 'Saturn') {
+        inspectPlacement(`What does Saturn in my ${houseNumber}${houseNumber === 1 ? 'st' : houseNumber === 2 ? 'nd' : houseNumber === 3 ? 'rd' : 'th'} House (${boxSign}) signify for career & dasha?`);
+      } else {
+        inspectPlacement(`Explain the astrological impact of ${p.name} in my ${houseNumber}${houseNumber === 1 ? 'st' : houseNumber === 2 ? 'nd' : houseNumber === 3 ? 'rd' : 'th'} House (${boxSign})`);
+      }
+    } else if (boxPlanets.length > 1) {
+      const pNames = boxPlanets.map((p) => p.name).join(' and ');
+      inspectPlacement(`Analyze the combined planetary influence of ${pNames} in my House ${houseNumber} (${boxSign})`);
+    } else {
+      inspectPlacement(`Analyze the significance of my House ${houseNumber} (${boxSign}) placements and house lord`);
+    }
+  };
 
   return (
     <div className={`relative flex flex-col items-center select-none w-full ${className}`}>
@@ -225,7 +245,9 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
             )}
 
             <text y="48" fill="#64748b" fontSize="8.5" fontStyle="italic">
-              {language === 'ta' ? 'தென்னிந்திய ராசி சக்கரம்' : 'South Indian Fixed Zodiac'}
+              {transitPlanets.length > 0
+                ? (language === 'ta' ? '✦ கோச்சாரம் சேர்க்கப்பட்டுள்ளது (T)' : '✦ Live Transits Overlay (T)')
+                : (language === 'ta' ? 'தென்னிந்திய ராசி சக்கரம்' : 'Click any house to inspect')}
             </text>
           </g>
 
@@ -237,14 +259,19 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
             const houseNumber = ((box.signIndex - lagnaSignIndex + 12) % 12) + 1;
             const isHovered = hoveredBox === box.signIndex;
 
-            // Find planets in this sign
-            const boxPlanets = planets.filter(
+            // Find natal planets in this sign
+            const boxPlanets = safePlanets.filter(
               (p) => p.sign.toLowerCase() === box.sign.toLowerCase()
             );
 
-            const count = boxPlanets.length;
-            const rowHeight = count >= 6 ? 14 : count === 5 ? 15 : 16.5;
-            const startY = count >= 6 ? 31 : count === 5 ? 32 : 34;
+            // Find transit planets in this sign if overlay active
+            const boxTransits = transitPlanets.filter(
+              (tp) => tp.sign.toLowerCase() === box.sign.toLowerCase()
+            );
+
+            const totalPlanets = boxPlanets.length + boxTransits.length;
+            const rowHeight = totalPlanets >= 6 ? 13 : totalPlanets === 5 ? 14 : 15.5;
+            const startY = totalPlanets >= 6 ? 29 : totalPlanets === 5 ? 31 : 33;
 
             return (
               <g
@@ -263,10 +290,11 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
                   strokeWidth={isLagnaBox ? '2' : '1'}
                   onMouseEnter={() => setHoveredBox(box.signIndex)}
                   onMouseLeave={() => setHoveredBox(null)}
-                  className="pointer-events-auto cursor-pointer"
+                  onClick={() => handleBoxClick(box.sign, houseNumber, boxPlanets)}
+                  className="pointer-events-auto cursor-pointer transition-colors"
                 />
 
-                {/* Lagna Corner Diagonal Ribbon Marker (Traditional) */}
+                {/* Lagna Corner Diagonal Ribbon Marker */}
                 {isLagnaBox && (
                   <path
                     d="M 1 1 L 22 1 L 1 22 Z"
@@ -275,7 +303,7 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
                   />
                 )}
 
-                {/* Header: Sign Name (Left Channel) */}
+                {/* Header: Sign Name */}
                 <text
                   x={isLagnaBox ? 25 : 6}
                   y={13}
@@ -287,7 +315,7 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
                   {language === 'ta' ? box.tamil : box.sign}
                 </text>
 
-                {/* Header: House Number / Lagna Status (Right Channel - Never Collides) */}
+                {/* Header: House Number */}
                 <text
                   x={cellSize - 6}
                   y={13}
@@ -310,8 +338,8 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
                   strokeOpacity={isLagnaBox ? 0.6 : 0.4}
                 />
 
-                {/* Planets residing in this House/Sign - Single-Column Clean Channel Layout */}
-                {boxPlanets.length === 0 ? (
+                {/* Natal & Transit Planets List */}
+                {boxPlanets.length === 0 && boxTransits.length === 0 ? (
                   <text
                     x={cellSize / 2}
                     y={cellSize / 2 + 8}
@@ -322,52 +350,113 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
                     -
                   </text>
                 ) : (
-                  boxPlanets.map((planet, pIdx) => {
-                    const py = startY + pIdx * rowHeight;
-                    const glyph = glyphMap[planet.name] || planet.name.substring(0, 2);
-                    const color = PLANET_COLORS[planet.name] || '#e2e8f0';
+                  <>
+                    {/* Render Natal Planets */}
+                    {boxPlanets.map((planet, pIdx) => {
+                      const py = startY + pIdx * rowHeight;
+                      const glyph = glyphMap[planet.name] || planet.name.substring(0, 2);
+                      const color = PLANET_COLORS[planet.name] || '#e2e8f0';
 
-                    return (
-                      <g key={planet.name}>
-                        {/* Channel 1: Planet Glyph (Left Aligned) */}
-                        <text
-                          x="5"
-                          y={py}
-                          fill={color}
-                          fontSize="8.5"
-                          fontWeight="bold"
-                        >
-                          {glyph}
-                        </text>
+                      // Dignity abbreviation
+                      let digBadge = '';
+                      let digColor = '#94a3b8';
+                      if (planet.dignity === 'Exalted') {
+                        digBadge = 'Ex';
+                        digColor = '#34d399';
+                      } else if (planet.dignity === 'Debilitated') {
+                        digBadge = 'Db';
+                        digColor = '#f43f5e';
+                      } else if (planet.dignity === 'Own House') {
+                        digBadge = 'Ow';
+                        digColor = '#fbbf24';
+                      }
+                      if (planet.isVargottama) {
+                        digBadge = digBadge ? `${digBadge}★` : 'Vg';
+                        digColor = '#c084fc';
+                      }
 
-                        {/* Channel 2: Degree (Right Aligned before (R)) */}
-                        <text
-                          x={planet.isRetrograde ? cellSize - 22 : cellSize - 5}
-                          y={py}
-                          fill="#cbd5e1"
-                          fontSize="8"
-                          fontFamily="monospace"
-                          textAnchor="end"
-                        >
-                          {Math.floor(planet.signDegree)}°{Math.floor((planet.signDegree % 1) * 60).toString().padStart(2, '0')}'
-                        </text>
-
-                        {/* Channel 3: Retrograde Tag (R) (Rightmost Edge) */}
-                        {planet.isRetrograde && (
+                      return (
+                        <g key={`natal-${planet.name}`}>
                           <text
-                            x={cellSize - 4}
+                            x="5"
                             y={py}
-                            fill="#f43f5e"
-                            fontSize="7.5"
+                            fill={color}
+                            fontSize="8.5"
                             fontWeight="bold"
+                          >
+                            {glyph}
+                          </text>
+
+                          {digBadge && (
+                            <text
+                              x="38"
+                              y={py}
+                              fill={digColor}
+                              fontSize="7"
+                              fontWeight="bold"
+                            >
+                              {digBadge}
+                            </text>
+                          )}
+
+                          <text
+                            x={planet.isRetrograde ? cellSize - 22 : cellSize - 5}
+                            y={py}
+                            fill="#cbd5e1"
+                            fontSize="8"
+                            fontFamily="monospace"
                             textAnchor="end"
                           >
-                            (R)
+                            {Math.floor(planet.signDegree)}°{Math.floor((planet.signDegree % 1) * 60).toString().padStart(2, '0')}'
                           </text>
-                        )}
-                      </g>
-                    );
-                  })
+
+                          {planet.isRetrograde && (
+                            <text
+                              x={cellSize - 4}
+                              y={py}
+                              fill="#f43f5e"
+                              fontSize="7.5"
+                              fontWeight="bold"
+                              textAnchor="end"
+                            >
+                              (R)
+                            </text>
+                          )}
+                        </g>
+                      );
+                    })}
+
+                    {/* Render Live Transit Overlay Planets */}
+                    {boxTransits.map((tPlanet, tIdx) => {
+                      const py = startY + (boxPlanets.length + tIdx) * rowHeight;
+                      const tGlyph = glyphMap[tPlanet.name] || tPlanet.name.substring(0, 2);
+
+                      return (
+                        <g key={`transit-${tPlanet.name}`}>
+                          <text
+                            x="5"
+                            y={py}
+                            fill="#10b981"
+                            fontSize="8"
+                            fontWeight="bold"
+                          >
+                            (T) {tGlyph}
+                          </text>
+
+                          <text
+                            x={cellSize - 5}
+                            y={py}
+                            fill="#6ee7b7"
+                            fontSize="7.5"
+                            fontFamily="monospace"
+                            textAnchor="end"
+                          >
+                            {Math.floor(tPlanet.signDegree)}°
+                          </text>
+                        </g>
+                      );
+                    })}
+                  </>
                 )}
               </g>
             );

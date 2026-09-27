@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { PlanetPosition, HouseCusp, Aspect, WesternChart } from '../types/astrology';
+import { useAstrology } from '../context/AstrologyContext';
 
 export interface WesternWheelProps {
   planets?: PlanetPosition[];
@@ -83,6 +84,7 @@ export const WesternWheel: React.FC<WesternWheelProps> = ({
   nativeName = 'Native',
   className = ''
 }) => {
+  const { inspectPlacement } = useAstrology();
   const planets = propsPlanets || tropicalChart?.planets || [];
   const houses = propsHouses || tropicalChart?.houses || [];
   const aspects = propsAspects || tropicalChart?.aspects || [];
@@ -249,6 +251,7 @@ export const WesternWheel: React.FC<WesternWheelProps> = ({
                 className="cursor-pointer"
                 onMouseEnter={() => setHoveredPlanet(planet.name)}
                 onMouseLeave={() => setHoveredPlanet(null)}
+                onClick={() => inspectPlacement(`Explain the psychological impact of ${planet.name} in ${planet.sign} (House ${planet.house}) in my Western chart`)}
               >
                 <circle
                   r={isHovered ? 9 : 7.5}
@@ -268,6 +271,9 @@ export const WesternWheel: React.FC<WesternWheelProps> = ({
               </g>
             );
           })}
+
+          {/* Solid Hub Background Circle to prevent aspect line collision */}
+          <circle cx={cx} cy={cy} r={55} fill="#090d16" stroke="#38bdf8" strokeWidth="1.2" />
 
           {/* Center Chart Branding */}
           <g transform={`translate(${cx}, ${cy})`} textAnchor="middle">

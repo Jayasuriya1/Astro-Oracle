@@ -30,6 +30,8 @@ export interface UserProfile {
   createdAt?: number;
 }
 
+export type PlanetaryDignity = 'Exalted' | 'Debilitated' | 'Own House' | 'Neutral' | 'exalted' | 'debilitated' | 'own_house' | 'friendly' | 'neutral' | 'enemy';
+
 export interface PlanetPosition {
   name: string;
   id: number;
@@ -46,6 +48,8 @@ export interface PlanetPosition {
   nakshatra?: string; // For Vedic
   nakshatraPada?: number; // 1 - 4
   nakshatraLord?: string;
+  dignity?: PlanetaryDignity;
+  isVargottama?: boolean;
 }
 
 export interface HouseCusp {
@@ -190,6 +194,27 @@ export interface PoruthamReport {
   percentage: number;
   verdict: 'Excellent Match' | 'Good Match' | 'Average Match' | 'Challenging / Needs Remediation';
   items: PoruthamItem[];
+}
+
+export interface AshtaKutaItem {
+  id: string;
+  name: string;
+  sanskrit: string;
+  kuta: string;
+  score: number;
+  maxScore: number;
+  status: 'Compatible' | 'Moderate' | 'Incompatible';
+  description: string;
+}
+
+export interface AshtaKutaReport {
+  profile1: { name: string; moonSign: string; nakshatra: string; pada: number };
+  profile2: { name: string; moonSign: string; nakshatra: string; pada: number };
+  totalScore: number;
+  maxScore: number; // 36
+  percentage: number;
+  verdict: 'Excellent Match (Uttam)' | 'Good Match (Madhyam)' | 'Average Match' | 'Challenging (Nadi/Bhakoot Dosha)';
+  items: AshtaKutaItem[];
 }
 
 export interface TransitData {

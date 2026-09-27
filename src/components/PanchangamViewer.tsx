@@ -17,6 +17,33 @@ export const PanchangamViewer: React.FC<{ panchangam: PanchangamData; className?
     ? (tithi.paksha === 'Shukla' ? 'வளர்பிறை (சுக்கில பட்சம்)' : 'தேய்பிறை (கிருஷ்ண பட்சம்)')
     : `${tithi.paksha} Paksha`;
 
+  // Function to evaluate window status: Active Now (pulsing red), Upcoming at [Time] (subtle amber), or Passed (slate)
+  const getTimingStatus = (startTimeStr: string, endTimeStr: string, isCurrent?: boolean) => {
+    if (isCurrent) return { status: 'active' as const, label: t.activeNow || 'Active Now' };
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const [sH, sM] = startTimeStr.split(':').map(Number);
+    const [eH, eM] = endTimeStr.split(':').map(Number);
+    const startMinutes = (sH || 0) * 60 + (sM || 0);
+    const endMinutes = (eH || 0) * 60 + (eM || 0);
+
+    if (currentMinutes < startMinutes) {
+      return {
+        status: 'upcoming' as const,
+        label: language === 'ta' ? `அடுத்து ${startTimeStr}` : `Upcoming at ${startTimeStr}`
+      };
+    } else if (currentMinutes >= endMinutes) {
+      return {
+        status: 'passed' as const,
+        label: language === 'ta' ? 'முடிந்தது' : 'Passed'
+      };
+    }
+    return { status: 'active' as const, label: t.activeNow || 'Active Now' };
+  };
+
+  const rahuStatus = getTimingStatus(rahuKalam.startTime, rahuKalam.endTime, rahuKalam.isCurrent);
+  const yamaStatus = getTimingStatus(yamagandam.startTime, yamagandam.endTime, yamagandam.isCurrent);
+
   return (
     <div className={`space-y-4 ${className}`}>
       {/* Top Banner: Panchangam Essentials */}
@@ -76,23 +103,39 @@ export const PanchangamViewer: React.FC<{ panchangam: PanchangamData; className?
         {/* Rahu Kalam */}
         <div
           className={`p-4 rounded-xl border transition ${
-            rahuKalam.isCurrent
-              ? 'bg-rose-950/40 border-rose-500/50 shadow-md shadow-rose-950/50'
+            rahuStatus.status === 'active'
+              ? 'bg-rose-950/40 border-rose-500/60 shadow-md shadow-rose-950/50 ring-1 ring-rose-500/30'
+              : rahuStatus.status === 'upcoming'
+              ? 'bg-amber-950/20 border-amber-500/30'
               : 'bg-slate-900/70 border-slate-800'
           }`}
         >
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-semibold text-rose-300 flex items-center gap-1.5">
               <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
               <span>{t.rahuKalam}</span>
             </span>
-            {rahuKalam.isCurrent && (
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500 text-white animate-pulse">
-                {t.activeNow}
+
+            {/* Dynamic Status Badge */}
+            {rahuStatus.status === 'active' && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/50 shadow-sm animate-pulse">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
+                {rahuStatus.label}
+              </span>
+            )}
+            {rahuStatus.status === 'upcoming' && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                <Clock className="w-3 h-3 text-amber-400" />
+                {rahuStatus.label}
+              </span>
+            )}
+            {rahuStatus.status === 'passed' && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-800 text-slate-400 border border-slate-700">
+                {rahuStatus.label}
               </span>
             )}
           </div>
-          <p className="text-lg font-bold font-mono text-white mt-1">
+          <p className="text-lg font-bold font-mono text-white mt-1.5">
             {rahuKalam.startTime} — {rahuKalam.endTime}
           </p>
           <p className="text-[11px] text-slate-400 mt-0.5">
@@ -105,23 +148,39 @@ export const PanchangamViewer: React.FC<{ panchangam: PanchangamData; className?
         {/* Yamagandam */}
         <div
           className={`p-4 rounded-xl border transition ${
-            yamagandam.isCurrent
-              ? 'bg-amber-950/40 border-amber-500/50'
+            yamaStatus.status === 'active'
+              ? 'bg-rose-950/40 border-rose-500/60 shadow-md shadow-rose-950/50 ring-1 ring-rose-500/30'
+              : yamaStatus.status === 'upcoming'
+              ? 'bg-amber-950/20 border-amber-500/30'
               : 'bg-slate-900/70 border-slate-800'
           }`}
         >
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-semibold text-amber-300 flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5 text-amber-400" />
               <span>{t.yamagandam}</span>
             </span>
-            {yamagandam.isCurrent && (
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500 text-slate-950">
-                {t.activeNow}
+
+            {/* Dynamic Status Badge */}
+            {yamaStatus.status === 'active' && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/50 shadow-sm animate-pulse">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
+                {yamaStatus.label}
+              </span>
+            )}
+            {yamaStatus.status === 'upcoming' && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                <Clock className="w-3 h-3 text-amber-400" />
+                {yamaStatus.label}
+              </span>
+            )}
+            {yamaStatus.status === 'passed' && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-800 text-slate-400 border border-slate-700">
+                {yamaStatus.label}
               </span>
             )}
           </div>
-          <p className="text-lg font-bold font-mono text-white mt-1">
+          <p className="text-lg font-bold font-mono text-white mt-1.5">
             {yamagandam.startTime} — {yamagandam.endTime}
           </p>
           <p className="text-[11px] text-slate-400 mt-0.5">

@@ -13,8 +13,10 @@
     --cosmic-rose: #f43f5e;
   }
 
-  html, body {
+  html, body, #root {
     height: 100%;
+    height: -webkit-fill-available;
+    width: 100%;
     margin: 0;
     padding: 0;
     background-color: #030712;
