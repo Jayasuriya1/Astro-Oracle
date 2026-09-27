@@ -23,6 +23,7 @@ import {
 import { useAstrology } from '../context/AstrologyContext';
 import { VedicChart } from './VedicChart';
 import { WesternWheel } from './WesternWheel';
+import { getTranslatedZodiac, getTranslatedPlanet, getTranslatedNakshatra } from '../utils/translations';
 
 const PLANET_SYMBOLS: Record<string, string> = {
   Sun: '☉',
@@ -60,7 +61,9 @@ export const OracleChat: React.FC = () => {
     setIsSettingsOpen,
     astrologyData,
     setActiveView,
-    setIsExportOpen
+    setIsExportOpen,
+    language,
+    t
   } = useAstrology();
 
   const [input, setInput] = useState('');
@@ -125,7 +128,7 @@ export const OracleChat: React.FC = () => {
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-xs font-bold text-amber-300 uppercase tracking-wider font-serif">
-              Studio Workstation • {profile.name}
+              {t.studioWorkstation} • {profile.name}
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -135,13 +138,13 @@ export const OracleChat: React.FC = () => {
               title="Export as PDF or Image"
             >
               <Download className="w-3 h-3 text-amber-400" />
-              <span>Export</span>
+              <span>{t.export}</span>
             </button>
             <button
               onClick={() => setActiveView('charts')}
               className="text-[11px] text-purple-300 hover:text-purple-200 hover:underline flex items-center gap-1 font-medium transition"
             >
-              <span>Full View</span>
+              <span>{t.fullView}</span>
               <ArrowRight className="w-3 h-3" />
             </button>
           </div>
@@ -159,7 +162,7 @@ export const OracleChat: React.FC = () => {
             }`}
           >
             <Compass className="w-3.5 h-3.5 text-amber-400" />
-            <span>Vedic Kundali</span>
+            <span>{t.vedicKundali}</span>
           </button>
           <button
             type="button"
@@ -171,7 +174,7 @@ export const OracleChat: React.FC = () => {
             }`}
           >
             <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-            <span>Western Wheel</span>
+            <span>{t.westernWheel}</span>
           </button>
         </div>
 
@@ -206,9 +209,9 @@ export const OracleChat: React.FC = () => {
         {sidereal && (
           <div className="grid grid-cols-3 gap-2">
             <div className="p-2.5 rounded-xl bg-slate-900/70 border border-slate-800 text-center">
-              <span className="text-[9px] uppercase tracking-wider text-slate-400 block">Lagna</span>
+              <span className="text-[9px] uppercase tracking-wider text-slate-400 block">{t.triadLagna}</span>
               <p className="text-xs sm:text-sm font-bold text-amber-300 truncate">
-                {sidereal.lagna.sign}
+                {getTranslatedZodiac(sidereal.lagna.sign, language)}
               </p>
               <p className="text-[10px] text-slate-400 font-mono">
                 {sidereal.lagna.formattedDegree.split(' ')[1] || sidereal.lagna.formattedDegree}
@@ -216,9 +219,9 @@ export const OracleChat: React.FC = () => {
             </div>
 
             <div className="p-2.5 rounded-xl bg-slate-900/70 border border-slate-800 text-center">
-              <span className="text-[9px] uppercase tracking-wider text-slate-400 block">Chandra</span>
+              <span className="text-[9px] uppercase tracking-wider text-slate-400 block">{t.triadChandra}</span>
               <p className="text-xs sm:text-sm font-bold text-cyan-300 truncate">
-                {moon?.sign || 'N/A'}
+                {moon?.sign ? getTranslatedZodiac(moon.sign, language) : 'N/A'}
               </p>
               <p className="text-[10px] text-slate-400 font-mono">
                 {moon?.formattedDegree || ''}
@@ -226,9 +229,9 @@ export const OracleChat: React.FC = () => {
             </div>
 
             <div className="p-2.5 rounded-xl bg-slate-900/70 border border-slate-800 text-center">
-              <span className="text-[9px] uppercase tracking-wider text-slate-400 block">Surya</span>
+              <span className="text-[9px] uppercase tracking-wider text-slate-400 block">{t.triadSurya}</span>
               <p className="text-xs sm:text-sm font-bold text-rose-300 truncate">
-                {sun?.sign || 'N/A'}
+                {sun?.sign ? getTranslatedZodiac(sun.sign, language) : 'N/A'}
               </p>
               <p className="text-[10px] text-slate-400 font-mono">
                 {sun?.formattedDegree || ''}
@@ -243,16 +246,16 @@ export const OracleChat: React.FC = () => {
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                <span>Active Vimshottari Timeline</span>
+                <span>{t.activeDashaTimeline}</span>
               </span>
               <span className="text-[10px] font-mono text-amber-300 font-semibold">
-                {currentDasha.percentagePassed}% elapsed
+                {currentDasha.percentagePassed}% {t.elapsed}
               </span>
             </div>
 
             <div className="flex items-baseline justify-between mt-1">
               <p className="text-sm font-bold text-white font-serif">
-                {currentDasha.lord} Mahadasha
+                {getTranslatedPlanet(currentDasha.lord, language)} {language === 'ta' ? 'மகா தசை' : 'Mahadasha'}
               </p>
               <p className="text-[10px] text-slate-400 font-mono">
                 {currentDasha.startDate.substring(0, 4)} → {currentDasha.endDate.substring(0, 4)}
@@ -261,12 +264,12 @@ export const OracleChat: React.FC = () => {
 
             {currentAntardasha && (
               <p className="text-[11px] text-purple-200 mt-0.5">
-                Current Bhukti:{' '}
+                {t.currentBhukti}:{' '}
                 <strong className="text-amber-300">
-                  {currentDasha.lord} / {currentAntardasha.lord}
+                  {getTranslatedPlanet(currentDasha.lord, language)} / {getTranslatedPlanet(currentAntardasha.lord, language)}
                 </strong>{' '}
                 <span className="text-[10px] text-slate-400">
-                  (until {currentAntardasha.endDate})
+                  ({language === 'ta' ? `முடிவு: ${currentAntardasha.endDate}` : `until ${currentAntardasha.endDate}`})
                 </span>
               </p>
             )}
@@ -285,20 +288,20 @@ export const OracleChat: React.FC = () => {
           <div className="rounded-xl bg-slate-900/80 border border-slate-800 overflow-hidden shadow-lg">
             <div className="px-3 py-2 bg-slate-900/95 border-b border-slate-800 flex items-center justify-between">
               <span className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">
-                Nakshatra & Pada Coordinates
+                {t.nakshatraPadaCoordinates}
               </span>
               <span className="text-[10px] text-amber-300/80 font-mono">
-                Lahiri Ayanamsa
+                {t.lahiriAyanamsa}
               </span>
             </div>
             <div className="overflow-x-auto touch-pan-x">
               <table className="w-full text-left text-[11px]">
                 <thead className="bg-slate-950/70 text-slate-400 uppercase tracking-wider border-b border-slate-800 text-[9px]">
                   <tr>
-                    <th className="py-1.5 px-2.5">Point</th>
-                    <th className="py-1.5 px-2.5">Sign & Deg</th>
-                    <th className="py-1.5 px-2.5">Nakshatra (Pada)</th>
-                    <th className="py-1.5 px-2.5">Lord</th>
+                    <th className="py-1.5 px-2.5">{t.colPoint}</th>
+                    <th className="py-1.5 px-2.5">{t.colSignDeg}</th>
+                    <th className="py-1.5 px-2.5">{t.colNakshatraPada}</th>
+                    <th className="py-1.5 px-2.5">{t.colLord}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/50">
@@ -306,16 +309,16 @@ export const OracleChat: React.FC = () => {
                   <tr id="planet-row-lagna" className="hover:bg-slate-800/40 transition">
                     <td className="py-1.5 px-2.5 font-semibold text-amber-300 flex items-center gap-1">
                       <span>✦</span>
-                      <span>Lagna</span>
+                      <span>{t.triadLagna}</span>
                     </td>
                     <td className="py-1.5 px-2.5 text-slate-200 font-mono text-[10px]">
-                      {sidereal.lagna.sign} {sidereal.lagna.formattedDegree.split(' ')[1] || sidereal.lagna.formattedDegree}
+                      {getTranslatedZodiac(sidereal.lagna.sign, language)} {sidereal.lagna.formattedDegree.split(' ')[1] || sidereal.lagna.formattedDegree}
                     </td>
                     <td className="py-1.5 px-2.5 text-slate-300">
-                      {sidereal.lagna.nakshatra} <span className="text-amber-400 font-medium">P{sidereal.lagna.pada}</span>
+                      {getTranslatedNakshatra(sidereal.lagna.nakshatra || '', language)} <span className="text-amber-400 font-medium">P{sidereal.lagna.pada}</span>
                     </td>
                     <td className="py-1.5 px-2.5 text-slate-400 text-[10px]">
-                      Ascendant
+                      {language === 'ta' ? 'லக்னம்' : 'Ascendant'}
                     </td>
                   </tr>
 
@@ -330,19 +333,19 @@ export const OracleChat: React.FC = () => {
                         <span className="text-amber-300 font-mono text-xs">
                           {PLANET_SYMBOLS[planet.name] || '•'}
                         </span>
-                        <span>{planet.name}</span>
+                        <span>{getTranslatedPlanet(planet.name, language)}</span>
                         {planet.isRetrograde && (
                           <span className="text-[9px] text-rose-400 font-bold">℞</span>
                         )}
                       </td>
                       <td className="py-1.5 px-2.5 text-slate-300 font-mono text-[10px]">
-                        {planet.sign} {planet.formattedDegree.split(' ')[1] || planet.formattedDegree}
+                        {getTranslatedZodiac(planet.sign, language)} {planet.formattedDegree.split(' ')[1] || planet.formattedDegree}
                       </td>
                       <td className="py-1.5 px-2.5 text-slate-300">
-                        {planet.nakshatra} <span className="text-amber-400 font-medium">P{planet.nakshatraPada}</span>
+                        {getTranslatedNakshatra(planet.nakshatra || '', language)} <span className="text-amber-400 font-medium">P{planet.nakshatraPada}</span>
                       </td>
                       <td className="py-1.5 px-2.5 text-slate-400 text-[10px]">
-                        {planet.nakshatraLord}
+                        {getTranslatedPlanet(planet.nakshatraLord || '', language)}
                       </td>
                     </tr>
                   ))}
@@ -369,7 +372,7 @@ export const OracleChat: React.FC = () => {
             }`}
           >
             <MessageSquare className="w-3.5 h-3.5" />
-            <span>Consultation Chat</span>
+            <span>{t.consultationChat}</span>
           </button>
           <button
             type="button"
@@ -381,7 +384,7 @@ export const OracleChat: React.FC = () => {
             }`}
           >
             <Compass className="w-3.5 h-3.5" />
-            <span>Visual Kundali</span>
+            <span>{t.visualKundali}</span>
           </button>
         </div>
 
@@ -398,7 +401,7 @@ export const OracleChat: React.FC = () => {
                     : 'text-slate-400'
                 }`}
               >
-                Vedic Kundali
+                {t.vedicKundali}
               </button>
               <button
                 type="button"
@@ -409,7 +412,7 @@ export const OracleChat: React.FC = () => {
                     : 'text-slate-400'
                 }`}
               >
-                Western Wheel
+                {t.westernWheel}
               </button>
             </div>
 
@@ -691,7 +694,7 @@ export const OracleChat: React.FC = () => {
                 className="flex items-center gap-1 text-[11px] text-slate-500 hover:text-rose-400 transition px-2 py-0.5 rounded hover:bg-slate-900"
               >
                 <Trash2 className="w-3 h-3" />
-                <span>Clear conversation</span>
+                <span>{t.clearConversation}</span>
               </button>
             </div>
           )}
@@ -724,8 +727,8 @@ export const OracleChat: React.FC = () => {
                 onKeyDown={handleKeyDown}
                 placeholder={
                   apiKey
-                    ? `Ask about timing, marriage, career, remedies...`
-                    : `Set your Gemini API key in Settings...`
+                    ? t.askPlaceholder
+                    : t.setKeyPlaceholder
                 }
                 className="flex-1 bg-transparent px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none resize-none max-h-24"
               />

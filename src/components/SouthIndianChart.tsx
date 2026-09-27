@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useAstrology } from '../context/AstrologyContext';
+import { getTranslatedZodiac } from '../utils/translations';
 import type { PlanetPosition } from '../types/astrology';
 
 export interface SouthIndianChartProps {
@@ -17,18 +19,18 @@ export interface SouthIndianChartProps {
 
 // Fixed South Indian 12-sign layout (Clockwise starting with Pisces at top-left)
 const SOUTH_INDIAN_BOXES = [
-  { signIndex: 11, sign: 'Pisces', sanskrit: 'Meena', abbr: 'PIS', row: 0, col: 0 },
-  { signIndex: 0,  sign: 'Aries', sanskrit: 'Mesha', abbr: 'ARI', row: 0, col: 1 },
-  { signIndex: 1,  sign: 'Taurus', sanskrit: 'Vrishabha', abbr: 'TAU', row: 0, col: 2 },
-  { signIndex: 2,  sign: 'Gemini', sanskrit: 'Mithuna', abbr: 'GEM', row: 0, col: 3 },
-  { signIndex: 3,  sign: 'Cancer', sanskrit: 'Karka', abbr: 'CAN', row: 1, col: 3 },
-  { signIndex: 4,  sign: 'Leo', sanskrit: 'Simha', abbr: 'LEO', row: 2, col: 3 },
-  { signIndex: 5,  sign: 'Virgo', sanskrit: 'Kanya', abbr: 'VIR', row: 3, col: 3 },
-  { signIndex: 6,  sign: 'Libra', sanskrit: 'Tula', abbr: 'LIB', row: 3, col: 2 },
-  { signIndex: 7,  sign: 'Scorpio', sanskrit: 'Vrischika', abbr: 'SCO', row: 3, col: 1 },
-  { signIndex: 8,  sign: 'Sagittarius', sanskrit: 'Dhanus', abbr: 'SAG', row: 3, col: 0 },
-  { signIndex: 9,  sign: 'Capricorn', sanskrit: 'Makara', abbr: 'CAP', row: 2, col: 0 },
-  { signIndex: 10, sign: 'Aquarius', sanskrit: 'Kumbha', abbr: 'AQU', row: 1, col: 0 }
+  { signIndex: 11, sign: 'Pisces', sanskrit: 'Meena', tamil: 'மீனம்', abbr: 'PIS', row: 0, col: 0 },
+  { signIndex: 0,  sign: 'Aries', sanskrit: 'Mesha', tamil: 'மேஷம்', abbr: 'ARI', row: 0, col: 1 },
+  { signIndex: 1,  sign: 'Taurus', sanskrit: 'Vrishabha', tamil: 'ரிஷபம்', abbr: 'TAU', row: 0, col: 2 },
+  { signIndex: 2,  sign: 'Gemini', sanskrit: 'Mithuna', tamil: 'மிதுனம்', abbr: 'GEM', row: 0, col: 3 },
+  { signIndex: 3,  sign: 'Cancer', sanskrit: 'Karka', tamil: 'கடகம்', abbr: 'CAN', row: 1, col: 3 },
+  { signIndex: 4,  sign: 'Leo', sanskrit: 'Simha', tamil: 'சிம்மம்', abbr: 'LEO', row: 2, col: 3 },
+  { signIndex: 5,  sign: 'Virgo', sanskrit: 'Kanya', tamil: 'கன்னி', abbr: 'VIR', row: 3, col: 3 },
+  { signIndex: 6,  sign: 'Libra', sanskrit: 'Tula', tamil: 'துலாம்', abbr: 'LIB', row: 3, col: 2 },
+  { signIndex: 7,  sign: 'Scorpio', sanskrit: 'Vrischika', tamil: 'விருச்சிகம்', abbr: 'SCO', row: 3, col: 1 },
+  { signIndex: 8,  sign: 'Sagittarius', sanskrit: 'Dhanus', tamil: 'தனுசு', abbr: 'SAG', row: 3, col: 0 },
+  { signIndex: 9,  sign: 'Capricorn', sanskrit: 'Makara', tamil: 'மகரம்', abbr: 'CAP', row: 2, col: 0 },
+  { signIndex: 10, sign: 'Aquarius', sanskrit: 'Kumbha', tamil: 'கும்பம்', abbr: 'AQU', row: 1, col: 0 }
 ];
 
 const PLANET_GLYPHS: Record<string, string> = {
@@ -44,6 +46,21 @@ const PLANET_GLYPHS: Record<string, string> = {
   Uranus: '♅ Ur',
   Neptune: '♆ Ne',
   Pluto: '♇ Pl'
+};
+
+const PLANET_GLYPHS_TA: Record<string, string> = {
+  Sun: '☉ சூரி',
+  Moon: '☽ சந்',
+  Mars: '♂ செவ்',
+  Mercury: '☿ புத',
+  Jupiter: '♃ குரு',
+  Venus: '♀ சுக்',
+  Saturn: '♄ சனி',
+  Rahu: '☊ ராகு',
+  Ketu: '☋ கேது',
+  Uranus: '♅ யுரே',
+  Neptune: '♆ நெப்',
+  Pluto: '♇ புளூ'
 };
 
 const PLANET_COLORS: Record<string, string> = {
@@ -80,7 +97,10 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
   chartTitle = 'RASI (D1)',
   className = ''
 }) => {
+  const { language } = useAstrology();
   const [hoveredBox, setHoveredBox] = useState<number | null>(null);
+
+  const glyphMap = language === 'ta' ? PLANET_GLYPHS_TA : PLANET_GLYPHS;
 
   // SVG dimensions
   const viewBoxSize = 440;
@@ -172,7 +192,7 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
             </text>
 
             <text y="-26" fill="#94a3b8" fontSize="9" letterSpacing="1.5">
-              LAHIRI SIDEREAL
+              {language === 'ta' ? 'லஹிரி வேத முறை' : 'LAHIRI SIDEREAL'}
             </text>
 
             <line x1="-50" y1="-18" x2="50" y2="-18" stroke="#334155" strokeWidth="0.8" />
@@ -184,17 +204,25 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
 
             {/* Lagna & Moon Signs */}
             <text y="16" fill="#c084fc" fontSize="10" fontWeight="500">
-              Lagna: <tspan fill="#f1f5f9" fontWeight="bold">{lagna.sign}</tspan> ({lagna.formattedDegree.split(' ')[1] || lagna.formattedDegree})
+              {language === 'ta' ? 'லக்னம்: ' : 'Lagna: '}
+              <tspan fill="#f1f5f9" fontWeight="bold">
+                {getTranslatedZodiac(lagna.sign, language)}
+              </tspan>{' '}
+              ({lagna.formattedDegree.split(' ')[1] || lagna.formattedDegree})
             </text>
 
             {moon && (
               <text y="32" fill="#38bdf8" fontSize="10" fontWeight="500">
-                Moon: <tspan fill="#f1f5f9" fontWeight="bold">{moon.sign}</tspan> ({moon.formattedDegree})
+                {language === 'ta' ? 'சந்திரன்: ' : 'Moon: '}
+                <tspan fill="#f1f5f9" fontWeight="bold">
+                  {getTranslatedZodiac(moon.sign, language)}
+                </tspan>{' '}
+                ({moon.formattedDegree})
               </text>
             )}
 
             <text y="48" fill="#64748b" fontSize="8.5" fontStyle="italic">
-              South Indian Fixed Zodiac
+              {language === 'ta' ? 'தென்னிந்திய ராசி சக்கரம்' : 'South Indian Fixed Zodiac'}
             </text>
           </g>
 
@@ -239,7 +267,7 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
                   />
                 )}
 
-                {/* Sign Label (e.g. MESHA / ARI) */}
+                {/* Sign Label (e.g. MESHA / ARI or மேஷம்) */}
                 <text
                   x={isLagnaBox ? 32 : 6}
                   y={12}
@@ -248,7 +276,7 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
                   fontWeight="600"
                   letterSpacing="0.5"
                 >
-                  {box.abbr} • {box.sanskrit}
+                  {language === 'ta' ? box.tamil : `${box.abbr} • ${box.sanskrit}`}
                 </text>
 
                 {/* House Number relative to Lagna (H1 - H12) */}
@@ -260,7 +288,7 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
                   fontWeight="bold"
                   textAnchor="end"
                 >
-                  {isLagnaBox ? 'ASC • H1' : `H${houseNumber}`}
+                  {isLagnaBox ? (language === 'ta' ? 'லக்' : 'ASC • H1') : `H${houseNumber}`}
                 </text>
 
                 {/* Lagna Identifier inside the box */}
@@ -269,7 +297,7 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
                     <rect
                       x="0"
                       y="-8"
-                      width="54"
+                      width={language === 'ta' ? 44 : 54}
                       height="13"
                       rx="3"
                       fill="#9333ea"
@@ -278,14 +306,14 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
                       strokeWidth="0.7"
                     />
                     <text
-                      x="27"
+                      x={language === 'ta' ? 22 : 27}
                       y="1.5"
                       fill="#fef08a"
                       fontSize="9"
                       fontWeight="bold"
                       textAnchor="middle"
                     >
-                      LAGNA
+                      {language === 'ta' ? 'லக்னம்' : 'LAGNA'}
                     </text>
                   </g>
                 )}
@@ -303,7 +331,7 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
                       const colX = isMultiCol && pIdx >= 3 ? 50 : 0;
                       const rowY = (isMultiCol && pIdx >= 3 ? pIdx - 3 : pIdx) * 15;
 
-                      const glyph = PLANET_GLYPHS[planet.name] || planet.name.substring(0, 2);
+                      const glyph = glyphMap[planet.name] || planet.name.substring(0, 2);
                       const color = PLANET_COLORS[planet.name] || '#e2e8f0';
 
                       return (

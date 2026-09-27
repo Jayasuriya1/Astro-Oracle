@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { SouthIndianChart } from './SouthIndianChart';
 import { NorthIndianChart } from './NorthIndianChart';
+import { useAstrology } from '../context/AstrologyContext';
 import type { PlanetPosition, NavamshaChart, VedicChart as VedicChartType } from '../types/astrology';
 
 export interface VedicChartProps {
@@ -30,6 +31,7 @@ export const VedicChart: React.FC<VedicChartProps> = ({
   defaultDivision = 'D1',
   className = ''
 }) => {
+  const { language, t } = useAstrology();
   const planets = propsPlanets || siderealChart?.planets || [];
   const lagna = propsLagna || siderealChart?.lagna || { sign: 'Aries', degree: 0, formattedDegree: "0°00' Aries" };
   const navamshaChart = propsNavamshaChart || siderealChart?.navamshaChart;
@@ -48,7 +50,9 @@ export const VedicChart: React.FC<VedicChartProps> = ({
       }
     : lagna;
 
-  const chartTitle = isD9 ? 'NAVAMSHA (D9)' : 'RASI (D1)';
+  const chartTitle = isD9
+    ? (language === 'ta' ? 'நவாம்சம் (D9)' : 'NAVAMSHA (D9)')
+    : (language === 'ta' ? 'ராசி (D1)' : 'RASI (D1)');
 
   return (
     <div className={`flex flex-col items-center w-full space-y-2.5 ${className}`}>
@@ -65,7 +69,7 @@ export const VedicChart: React.FC<VedicChartProps> = ({
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            South Indian
+            {t.southIndian}
           </button>
           <button
             type="button"
@@ -76,7 +80,7 @@ export const VedicChart: React.FC<VedicChartProps> = ({
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            North Indian
+            {t.northIndian}
           </button>
         </div>
 
@@ -91,7 +95,7 @@ export const VedicChart: React.FC<VedicChartProps> = ({
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            D1 Rasi
+            {t.d1Rasi}
           </button>
           <button
             type="button"
@@ -102,7 +106,7 @@ export const VedicChart: React.FC<VedicChartProps> = ({
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            D9 Navamsha
+            {t.d9Navamsha}
           </button>
         </div>
       </div>

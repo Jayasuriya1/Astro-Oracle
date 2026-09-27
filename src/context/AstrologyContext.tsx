@@ -4,10 +4,16 @@ import { storageService, defaultProfile } from '../services/storageService';
 import { astrologyEngine } from '../services/astrologyEngine';
 import { aiService } from '../services/aiService';
 
+import { UI_TRANSLATIONS, type Language } from '../utils/translations';
+
 interface AstrologyContextType {
   profile: UserProfile;
   profiles: UserProfile[];
   apiKey: string;
+  language: Language;
+  setLanguage: (lang: Language) => void;
+  toggleLanguage: () => void;
+  t: typeof UI_TRANSLATIONS['en'];
   astrologyData: CalculatedAstrologyData | null;
   chatHistory: ChatMessage[];
   isCalculating: boolean;
@@ -50,6 +56,25 @@ export const AstrologyProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [settingsModalMode, setSettingsModalMode] = useState<'edit' | 'add_member'>('edit');
   const [activeView, setActiveView] = useState<'chat' | 'charts' | 'transits'>('chat');
   const [isExportOpen, setIsExportOpen] = useState<boolean>(false);
+
+  const [language, setLanguageState] = useState<Language>(() => {
+    return (localStorage.getItem('astro_language') as Language) || 'en';
+  });
+
+  const setLanguage = useCallback((lang: Language) => {
+    setLanguageState(lang);
+    localStorage.setItem('astro_language', lang);
+  }, []);
+
+  const toggleLanguage = useCallback(() => {
+    setLanguageState((prev) => {
+      const next = prev === 'en' ? 'ta' : 'en';
+      localStorage.setItem('astro_language', next);
+      return next;
+    });
+  }, []);
+
+  const t = UI_TRANSLATIONS[language];
 
   const scrollToPlanet = useCallback((planetName: string) => {
     const targetId = `planet-row-${planetName.toLowerCase()}`;
@@ -368,6 +393,10 @@ export const AstrologyProvider: React.FC<{ children: ReactNode }> = ({ children 
         isSettingsOpen,
         settingsModalMode,
         setSettingsModalMode,
+        language,
+        setLanguage,
+        toggleLanguage,
+        t,
         activeView,
         setActiveView,
         isExportOpen,

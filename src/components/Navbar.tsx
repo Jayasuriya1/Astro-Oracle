@@ -1,7 +1,8 @@
-import { Sparkles, Compass, Radio, Download } from 'lucide-react';
+import { Sparkles, Compass, Radio, Download, Languages } from 'lucide-react';
 import { useAstrology } from '../context/AstrologyContext';
 import { CelestialEmblem } from './CelestialEmblem';
 import { ProfileSwitcher } from './ProfileSwitcher';
+import { getTranslatedZodiac } from '../utils/translations';
 
 export const Navbar: React.FC = () => {
   const {
@@ -11,7 +12,10 @@ export const Navbar: React.FC = () => {
     setIsSettingsOpen,
     setSettingsModalMode,
     setIsExportOpen,
-    scrollToPlanet
+    scrollToPlanet,
+    language,
+    toggleLanguage,
+    t
   } = useAstrology();
 
   // Extract quick celestial signs
@@ -32,23 +36,22 @@ export const Navbar: React.FC = () => {
         <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 h-16 sm:h-17 flex items-center justify-between gap-2 sm:gap-4">
-          {/* Left: Bespoke Luxury Brand Section */}
-          <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
+          {/* Left: Bespoke Luxury Brand Section with Fixed Alignment */}
+          <div className="flex items-center gap-3 sm:gap-3.5 flex-shrink-0">
             {/* Handcrafted Sacred Geometry Astrolabe Emblem */}
-            <CelestialEmblem size={40} className="hidden xs:flex flex-shrink-0" />
-            <CelestialEmblem size={34} className="flex xs:hidden flex-shrink-0" />
+            <CelestialEmblem size={38} className="flex flex-shrink-0 drop-shadow-[0_0_12px_rgba(245,158,11,0.3)]" />
 
-            <div className="min-w-0">
+            <div className="flex flex-col justify-center">
               <div className="flex items-center gap-2">
-                <span className="font-bold tracking-[0.14em] text-transparent bg-clip-text bg-gradient-to-r from-[#fff9db] via-[#fde047] to-[#d97706] text-base sm:text-lg lg:text-xl font-serif whitespace-nowrap drop-shadow-[0_2px_10px_rgba(245,158,11,0.25)]">
-                  ASTRO ORACLE
+                <span className="font-bold tracking-[0.12em] text-transparent bg-clip-text bg-gradient-to-r from-[#fff9db] via-[#fde047] to-[#d97706] text-base sm:text-lg lg:text-xl font-serif whitespace-nowrap drop-shadow-[0_2px_10px_rgba(245,158,11,0.25)] leading-tight">
+                  {t.appName}
                 </span>
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-gradient-to-r from-amber-500/20 to-purple-500/20 text-amber-300 border border-amber-400/40 tracking-wider shadow-sm">
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-gradient-to-r from-amber-500/20 to-purple-500/20 text-amber-300 border border-amber-400/40 tracking-wider shadow-sm leading-none flex-shrink-0">
                   PRO
                 </span>
               </div>
-              <p className="text-[9px] sm:text-[10px] text-amber-200/60 font-mono tracking-widest hidden sm:block uppercase">
-                SwissEph WASM • Hybrid Vedic & Western
+              <p className="text-[9px] sm:text-[10px] text-amber-200/60 font-mono tracking-wider hidden sm:block uppercase whitespace-nowrap mt-0.5">
+                {t.subtitle}
               </p>
             </div>
           </div>
@@ -64,7 +67,7 @@ export const Navbar: React.FC = () => {
               }`}
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              <span>Oracle Chat</span>
+              <span>{t.navChat}</span>
             </button>
 
             <button
@@ -76,7 +79,7 @@ export const Navbar: React.FC = () => {
               }`}
             >
               <Compass className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Natal Placements</span>
+              <span>{t.navCharts}</span>
             </button>
 
             <button
@@ -88,12 +91,12 @@ export const Navbar: React.FC = () => {
               }`}
             >
               <Radio className="w-3.5 h-3.5 text-rose-400" />
-              <span>Live Transits</span>
+              <span>{t.navTransits}</span>
             </button>
           </nav>
 
-          {/* Right: Celestial Signs & Family Profile Switcher */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+          {/* Right: Language Switcher, Celestial Signs, Export & Family Profile */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0">
             {/* Celestial Signs Clickable Shortcuts (Large Screens) */}
             {tropicalSun && vedicMoon && (
               <div className="hidden xl:flex items-center gap-1.5 p-1 rounded-xl bg-slate-900/70 border border-slate-800/80 text-[11px] text-slate-300">
@@ -101,18 +104,18 @@ export const Navbar: React.FC = () => {
                   type="button"
                   onClick={() => scrollToPlanet('Sun')}
                   title="Scroll to Sun placements"
-                  className="px-2 py-0.5 rounded-lg text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 font-medium transition flex items-center gap-1"
+                  className="px-2 py-0.5 rounded-lg text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 font-medium transition flex items-center gap-1 whitespace-nowrap"
                 >
-                  <span>☉ {tropicalSun.sign}</span>
+                  <span>☉ {getTranslatedZodiac(tropicalSun.sign, language)}</span>
                 </button>
                 <span className="text-slate-700">•</span>
                 <button
                   type="button"
                   onClick={() => scrollToPlanet('Moon')}
                   title="Scroll to Moon placements"
-                  className="px-2 py-0.5 rounded-lg text-cyan-300 hover:text-cyan-200 hover:bg-cyan-500/10 font-medium transition flex items-center gap-1"
+                  className="px-2 py-0.5 rounded-lg text-cyan-300 hover:text-cyan-200 hover:bg-cyan-500/10 font-medium transition flex items-center gap-1 whitespace-nowrap"
                 >
-                  <span>☽ {vedicMoon.sign}</span>
+                  <span>☽ {getTranslatedZodiac(vedicMoon.sign, language)}</span>
                 </button>
                 {vedicLagna && (
                   <>
@@ -121,14 +124,27 @@ export const Navbar: React.FC = () => {
                       type="button"
                       onClick={() => scrollToPlanet('Lagna')}
                       title="Scroll to Ascendant placements"
-                      className="px-2 py-0.5 rounded-lg text-purple-300 hover:text-purple-200 hover:bg-purple-500/10 font-medium transition flex items-center gap-1"
+                      className="px-2 py-0.5 rounded-lg text-purple-300 hover:text-purple-200 hover:bg-purple-500/10 font-medium transition flex items-center gap-1 whitespace-nowrap"
                     >
-                      <span>Asc {vedicLagna.sign}</span>
+                      <span>{language === 'ta' ? 'லக்' : 'Asc'} {getTranslatedZodiac(vedicLagna.sign, language)}</span>
                     </button>
                   </>
                 )}
               </div>
             )}
+
+            {/* Dedicated Language Toggle (English / தமிழ்) */}
+            <button
+              type="button"
+              onClick={toggleLanguage}
+              className="px-2.5 py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/40 text-xs font-medium transition flex items-center gap-1.5 shadow-sm text-slate-200 hover:text-white"
+              title={language === 'en' ? 'Switch to Tamil (தமிழ்)' : 'Switch to English'}
+            >
+              <Languages className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+              <span className="font-semibold text-[11px] text-amber-300">
+                {language === 'en' ? 'தமிழ்' : 'English'}
+              </span>
+            </button>
 
             {/* Export Chart & AI Reading Button */}
             <button
@@ -138,7 +154,7 @@ export const Navbar: React.FC = () => {
               title="Export Chart as PDF or Image"
             >
               <Download className="w-3.5 h-3.5 text-amber-400" />
-              <span className="hidden sm:inline">Export</span>
+              <span className="hidden sm:inline">{t.export}</span>
             </button>
 
             {/* Multi-User Family Profile Switcher */}
@@ -158,7 +174,7 @@ export const Navbar: React.FC = () => {
           }`}
         >
           <Sparkles className="w-4 h-4" />
-          <span className="text-[10px] font-medium tracking-tight">Oracle Chat</span>
+          <span className="text-[10px] font-medium tracking-tight">{t.navChat}</span>
         </button>
 
         <button
@@ -170,7 +186,7 @@ export const Navbar: React.FC = () => {
           }`}
         >
           <Compass className="w-4 h-4" />
-          <span className="text-[10px] font-medium tracking-tight">Placements</span>
+          <span className="text-[10px] font-medium tracking-tight">{t.navCharts}</span>
         </button>
 
         <button
@@ -182,7 +198,7 @@ export const Navbar: React.FC = () => {
           }`}
         >
           <Radio className="w-4 h-4" />
-          <span className="text-[10px] font-medium tracking-tight">Transits</span>
+          <span className="text-[10px] font-medium tracking-tight">{t.navTransits}</span>
         </button>
       </nav>
     </>

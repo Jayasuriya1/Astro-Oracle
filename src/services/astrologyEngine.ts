@@ -493,7 +493,7 @@ export function calculatePorutham(
   items.push({
     id: 'dina',
     name: 'Dina Porutham',
-    sanskrit: 'दिन पोरुथम',
+    sanskrit: 'தினப் பொருத்தம்',
     status: isDinaGood ? 'Compatible' : 'Incompatible',
     score: isDinaGood ? 1 : 0,
     maxScore: 1,
@@ -517,7 +517,7 @@ export function calculatePorutham(
   items.push({
     id: 'gana',
     name: 'Gana Porutham',
-    sanskrit: 'गण पोरुथम',
+    sanskrit: 'கணப் பொருத்தம்',
     status: ganaStatus,
     score: ganaScore,
     maxScore: 1,
@@ -529,7 +529,7 @@ export function calculatePorutham(
   items.push({
     id: 'mahendra',
     name: 'Mahendra Porutham',
-    sanskrit: 'महेन्द्र पोरुथम',
+    sanskrit: 'மகேந்திரப் பொருத்தம்',
     status: isMahendra ? 'Compatible' : 'Incompatible',
     score: isMahendra ? 1 : 0,
     maxScore: 1,
@@ -544,7 +544,7 @@ export function calculatePorutham(
   items.push({
     id: 'stree_deergha',
     name: 'Stree Deergha',
-    sanskrit: 'स्त्री दीर्घ पोरुथम',
+    sanskrit: 'ஸ்திரீ தீர்க்கப் பொருத்தம்',
     status: isStreeDeergha ? 'Compatible' : isStreeModerate ? 'Moderate' : 'Incompatible',
     score: isStreeDeergha ? 1 : isStreeModerate ? 0.5 : 0,
     maxScore: 1,
@@ -557,7 +557,7 @@ export function calculatePorutham(
   items.push({
     id: 'yoni',
     name: 'Yoni Porutham',
-    sanskrit: 'योनि पोरुथम',
+    sanskrit: 'யோனிப் பொருத்தம்',
     status: 'Compatible',
     score: 1,
     maxScore: 1,
@@ -572,7 +572,7 @@ export function calculatePorutham(
   items.push({
     id: 'rasi',
     name: 'Rasi Porutham',
-    sanskrit: 'राशी पोरुथम',
+    sanskrit: 'ராசிப் பொருத்தம்',
     status: isRasiGood ? 'Compatible' : 'Moderate',
     score: isRasiGood ? 1 : 0.5,
     maxScore: 1,
@@ -585,7 +585,7 @@ export function calculatePorutham(
   items.push({
     id: 'rasyadhipathi',
     name: 'Rasyadhipathi Porutham',
-    sanskrit: 'राश्याधिपति पोरुथम',
+    sanskrit: 'ராசியாதிபதிப் பொருத்தம்',
     status: 'Compatible',
     score: 1,
     maxScore: 1,
@@ -596,7 +596,7 @@ export function calculatePorutham(
   items.push({
     id: 'vashya',
     name: 'Vashya Porutham',
-    sanskrit: 'वश्य पोरुथम',
+    sanskrit: 'வசியப் பொருத்தம்',
     status: 'Compatible',
     score: 1,
     maxScore: 1,
@@ -610,7 +610,7 @@ export function calculatePorutham(
   items.push({
     id: 'rajju',
     name: 'Rajju Porutham (Key)',
-    sanskrit: 'रज्जु पोरुथम',
+    sanskrit: 'ரஜ்ஜுப் பொருத்தம் (மாங்கல்யம்)',
     status: isRajjuMatch ? 'Compatible' : 'Incompatible',
     score: isRajjuMatch ? 1 : 0,
     maxScore: 1,
@@ -623,7 +623,7 @@ export function calculatePorutham(
   items.push({
     id: 'vedha',
     name: 'Vedha Porutham',
-    sanskrit: 'वेध पोरुथम',
+    sanskrit: 'வேதப் பொருத்தம்',
     status: 'Compatible',
     score: 1,
     maxScore: 1,

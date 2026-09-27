@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { HeartHandshake, CheckCircle2, AlertTriangle, XCircle, Users } from 'lucide-react';
 import { useAstrology } from '../context/AstrologyContext';
 import { calculatePorutham } from '../services/astrologyEngine';
+import { getPoruthamInfo } from '../utils/translations';
 import type { PoruthamReport } from '../types/astrology';
 
 export const PoruthamViewer: React.FC = () => {
-  const { profiles, profile } = useAstrology();
+  const { profiles, profile, astrologyData, language, t } = useAstrology();
 
   // Selected profile 1 & 2
   const [profile1Id, setProfile1Id] = useState<string>(profile.id);
@@ -17,15 +18,17 @@ export const PoruthamViewer: React.FC = () => {
   const p2 = profiles.find((p) => p.id === profile2Id) || profile;
 
   // Compute Porutham match
-  // Extract Moon info (or default if calculation in progress)
   const report: PoruthamReport = React.useMemo(() => {
-    // For demo/calculation, we use their sidereal placements or determine from coordinates
+    const p1Moon = (p1.id === profile.id && astrologyData?.siderealChart)
+      ? astrologyData.siderealChart.planets.find((p) => p.name === 'Moon')
+      : null;
+
     return calculatePorutham(
       {
         name: p1.name,
-        moonSign: 'Capricorn',
-        nakshatra: 'Shravana',
-        pada: 4
+        moonSign: p1Moon?.sign || 'Capricorn',
+        nakshatra: p1Moon?.nakshatra || 'Shravana',
+        pada: p1Moon?.nakshatraPada || 4
       },
       {
         name: p2.name,
@@ -34,7 +37,15 @@ export const PoruthamViewer: React.FC = () => {
         pada: 2
       }
     );
-  }, [p1, p2]);
+  }, [p1, p2, profile.id, astrologyData]);
+
+  // Translate verdict if Tamil
+  const translatedVerdict = React.useMemo(() => {
+    if (language !== 'ta') return report.verdict;
+    if (report.percentage >= 70) return 'சிறந்த பொருத்தம் (உத்தமம்)';
+    if (report.percentage >= 50) return 'நல்ல பொருத்தம் (மத்திமம்)';
+    return 'பொருத்தம் குறைவு (பரிகாரம் தேவை)';
+  }, [report, language]);
 
   return (
     <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
@@ -44,16 +55,16 @@ export const PoruthamViewer: React.FC = () => {
           <div>
             <h2 className="text-lg sm:text-xl font-bold font-serif text-white flex items-center gap-2">
               <HeartHandshake className="w-5 h-5 text-rose-400" />
-              <span>Vedic Compatibility & 10 Porutham Analysis</span>
+              <span>{t.poruthamTitle}</span>
             </h2>
             <p className="text-xs text-slate-300 mt-1">
-              Traditional South Indian marriage and alliance matching based on Moon Nakshatras & Rajju.
+              {t.poruthamSubtitle}
             </p>
           </div>
 
           <div className="flex items-center gap-2 text-right">
             <div className="p-2.5 rounded-xl bg-purple-900/40 border border-purple-500/40 text-center">
-              <span className="text-[10px] uppercase font-bold text-amber-300 block">Match Score</span>
+              <span className="text-[10px] uppercase font-bold text-amber-300 block">{t.matchScore}</span>
               <span className="text-xl font-bold font-mono text-white">
                 {report.totalScore} / {report.maxScore}
               </span>
@@ -66,7 +77,7 @@ export const PoruthamViewer: React.FC = () => {
           <div className="space-y-1">
             <label className="text-xs text-slate-400 font-medium flex items-center gap-1.5">
               <Users className="w-3.5 h-3.5 text-purple-400" />
-              <span>Partner 1 (Girl / Native)</span>
+              <span>{t.partner1}</span>
             </label>
             <select
               value={profile1Id}
@@ -84,7 +95,7 @@ export const PoruthamViewer: React.FC = () => {
           <div className="space-y-1">
             <label className="text-xs text-slate-400 font-medium flex items-center gap-1.5">
               <Users className="w-3.5 h-3.5 text-rose-400" />
-              <span>Partner 2 (Boy / Match)</span>
+              <span>{t.partner2}</span>
             </label>
             <select
               value={profile2Id}
@@ -105,16 +116,24 @@ export const PoruthamViewer: React.FC = () => {
       <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between gap-3 flex-wrap">
         <div>
           <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-            Overall Astrological Verdict
+            {t.overallVerdict}
           </span>
           <p className="text-base sm:text-lg font-bold text-emerald-300 font-serif">
-            {report.verdict} ({report.percentage}%)
+            {translatedVerdict} ({report.percentage}%)
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-300">
-            Rajju Safeguard: <strong className="text-emerald-400 font-semibold">Matched (Protected)</strong>
-          </span>
+          {(() => {
+            const isRajjuSafe = report.items.find((i) => i.id === 'rajju')?.status === 'Compatible';
+            return (
+              <span className="text-xs text-slate-300">
+                {t.rajjuSafeguard}:{' '}
+                <strong className={isRajjuSafe ? 'text-emerald-400 font-semibold' : 'text-rose-400 font-semibold'}>
+                  {isRajjuSafe ? t.matchedProtected : t.rajjuDosha}
+                </strong>
+              </span>
+            );
+          })()}
         </div>
       </div>
 
@@ -123,6 +142,7 @@ export const PoruthamViewer: React.FC = () => {
         {report.items.map((item) => {
           const isGood = item.status === 'Compatible';
           const isMod = item.status === 'Moderate';
+          const poruthamInfo = getPoruthamInfo(item.id, language);
 
           return (
             <div
@@ -138,8 +158,12 @@ export const PoruthamViewer: React.FC = () => {
               <div className="flex items-center justify-between mb-1">
                 <div>
                   <h4 className="text-xs sm:text-sm font-semibold text-white flex items-center gap-1.5">
-                    <span>{item.name}</span>
-                    <span className="text-[10px] text-slate-400 font-normal">({item.sanskrit})</span>
+                    <span>{poruthamInfo.name}</span>
+                    {language === 'en' && (
+                      <span className="text-[10px] text-purple-300/80 font-normal">
+                        ({poruthamInfo.tamilSubtitle})
+                      </span>
+                    )}
                   </h4>
                 </div>
                 <div className="flex items-center gap-1">
@@ -161,7 +185,9 @@ export const PoruthamViewer: React.FC = () => {
                   )}
                 </div>
               </div>
-              <p className="text-[11px] text-slate-400 leading-snug">{item.description}</p>
+              <p className="text-[11px] text-slate-400 leading-snug">
+                {language === 'ta' && poruthamInfo.desc ? poruthamInfo.desc : item.description}
+              </p>
             </div>
           );
         })}

@@ -7,6 +7,7 @@ import { WesternWheel } from './WesternWheel';
 import { VimshottariDashaTable } from './VimshottariDashaTable';
 import { PanchangamViewer } from './PanchangamViewer';
 import { PoruthamViewer } from './PoruthamViewer';
+import { getTranslatedZodiac, getTranslatedPlanet, getTranslatedNakshatra } from '../utils/translations';
 
 const PLANET_SYMBOLS: Record<string, string> = {
   Sun: '☉',
@@ -41,7 +42,7 @@ const SIGN_COLORS: Record<string, string> = {
 export const ChartViewer: React.FC<{ defaultSubTab?: 'western' | 'vedic' | 'transits' | 'porutham' }> = ({
   defaultSubTab = 'vedic'
 }) => {
-  const { astrologyData, isCalculating, recalculate, profile } = useAstrology();
+  const { astrologyData, isCalculating, recalculate, profile, language, t } = useAstrology();
   const [subTab, setSubTab] = useState<'vedic' | 'western' | 'transits' | 'porutham'>(defaultSubTab);
 
   if (isCalculating || !astrologyData) {
@@ -62,10 +63,10 @@ export const ChartViewer: React.FC<{ defaultSubTab?: 'western' | 'vedic' | 'tran
         <div className="min-w-0">
           <h2 className="text-lg sm:text-xl font-bold font-serif text-white tracking-wide flex items-center gap-2 truncate">
             <Compass className="w-5 h-5 text-amber-400 flex-shrink-0" />
-            <span>Astronomical Placements: {profile.name}</span>
+            <span>{t.astronomicalPlacements}: {profile.name}</span>
           </h2>
           <p className="text-[11px] sm:text-xs text-slate-400 mt-1">
-            Born: {profile.birthDate} at {profile.birthTime} • {profile.birthCoordinates.latitude.toFixed(2)}°N, {profile.birthCoordinates.longitude.toFixed(2)}°E
+            {t.born}: {profile.birthDate} {t.at} {profile.birthTime} • {profile.birthCoordinates.latitude.toFixed(2)}°N, {profile.birthCoordinates.longitude.toFixed(2)}°E
           </p>
         </div>
 
@@ -80,8 +81,7 @@ export const ChartViewer: React.FC<{ defaultSubTab?: 'western' | 'vedic' | 'tran
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              <span>Vedic</span>
-              <span className="hidden sm:inline"> (Lahiri)</span>
+              <span>{t.tabVedic}</span>
             </button>
             <button
               onClick={() => setSubTab('western')}
@@ -91,8 +91,7 @@ export const ChartViewer: React.FC<{ defaultSubTab?: 'western' | 'vedic' | 'tran
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              <span>Western</span>
-              <span className="hidden sm:inline"> (Wheel)</span>
+              <span>{t.tabWestern}</span>
             </button>
             <button
               onClick={() => setSubTab('transits')}
@@ -102,8 +101,7 @@ export const ChartViewer: React.FC<{ defaultSubTab?: 'western' | 'vedic' | 'tran
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              <span>Panchangam</span>
-              <span className="hidden sm:inline"> & Live</span>
+              <span>{t.tabTransits}</span>
             </button>
             <button
               onClick={() => setSubTab('porutham')}
@@ -114,7 +112,7 @@ export const ChartViewer: React.FC<{ defaultSubTab?: 'western' | 'vedic' | 'tran
               }`}
             >
               <HeartHandshake className="w-3 h-3 inline mr-1" />
-              <span>Porutham</span>
+              <span>{t.tabPorutham}</span>
             </button>
           </div>
 
@@ -151,26 +149,30 @@ export const ChartViewer: React.FC<{ defaultSubTab?: 'western' | 'vedic' | 'tran
             <div className="lg:col-span-6 space-y-3.5">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="p-3.5 sm:p-4 rounded-xl bg-slate-900/80 border border-slate-800">
-                  <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400">Lagna (Ascendant)</span>
+                  <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400">
+                    {t.triadLagna} ({language === 'ta' ? 'லக்னம்' : 'Ascendant'})
+                  </span>
                   <p className="text-base sm:text-lg font-bold text-amber-300 font-serif mt-0.5">
-                    {siderealChart.lagna.sign}
+                    {getTranslatedZodiac(siderealChart.lagna.sign, language)}
                   </p>
                   <p className="text-[11px] sm:text-xs text-slate-400">
-                    {siderealChart.lagna.formattedDegree} • {siderealChart.lagna.nakshatra} (Pada {siderealChart.lagna.pada})
+                    {siderealChart.lagna.formattedDegree} • {getTranslatedNakshatra(siderealChart.lagna.nakshatra || '', language)} (P{siderealChart.lagna.pada})
                   </p>
                 </div>
 
                 <div className="p-3.5 sm:p-4 rounded-xl bg-slate-900/80 border border-slate-800">
-                  <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400">Chandra Rasi (Moon Sign)</span>
+                  <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400">
+                    {t.triadChandra} ({language === 'ta' ? 'சந்திர ராசி' : 'Moon Sign'})
+                  </span>
                   {(() => {
                     const moon = siderealChart.planets.find(p => p.name === 'Moon');
                     return (
                       <>
                         <p className="text-base sm:text-lg font-bold text-cyan-300 font-serif mt-0.5">
-                          {moon?.sign || 'N/A'}
+                          {moon?.sign ? getTranslatedZodiac(moon.sign, language) : 'N/A'}
                         </p>
                         <p className="text-[11px] sm:text-xs text-slate-400">
-                          {moon?.formattedDegree} • {moon?.nakshatra} (Pada {moon?.nakshatraPada})
+                          {moon?.formattedDegree} • {moon?.nakshatra ? getTranslatedNakshatra(moon.nakshatra, language) : ''} (P{moon?.nakshatraPada})
                         </p>
                       </>
                     );
@@ -180,7 +182,7 @@ export const ChartViewer: React.FC<{ defaultSubTab?: 'western' | 'vedic' | 'tran
                 <div className="p-3.5 sm:p-4 rounded-xl bg-slate-900/80 border border-slate-800">
                   <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400">Ayanamsa</span>
                   <p className="text-base sm:text-lg font-bold text-purple-300 font-serif mt-0.5">
-                    Chitra Paksha (Lahiri)
+                    {t.lahiriAyanamsa}
                   </p>
                   <p className="text-[11px] sm:text-xs text-slate-400">
                     Offset: {siderealChart.ayanamsaValue.toFixed(4)}° • Whole Sign
@@ -193,10 +195,10 @@ export const ChartViewer: React.FC<{ defaultSubTab?: 'western' | 'vedic' | 'tran
                 <div className="p-3.5 sm:p-4 rounded-xl bg-purple-950/30 border border-purple-500/20 text-xs text-slate-300 flex items-center justify-between gap-3">
                   <div>
                     <span className="text-[10px] uppercase font-bold text-emerald-400 tracking-wider">
-                      ● Active Vimshottari Period
+                      ● {t.activeDashaPeriod}
                     </span>
                     <p className="text-sm font-semibold text-white font-serif mt-0.5">
-                      {siderealChart.dashaReport.currentMahadasha.lord} Mahadasha ({siderealChart.dashaReport.currentMahadasha.totalYears}y)
+                      {getTranslatedPlanet(siderealChart.dashaReport.currentMahadasha.lord, language)} {language === 'ta' ? 'மகா தசை' : 'Mahadasha'} ({siderealChart.dashaReport.currentMahadasha.totalYears}y)
                     </p>
                     <p className="text-[11px] text-slate-400">
                       {siderealChart.dashaReport.currentMahadasha.startDate} to {siderealChart.dashaReport.currentMahadasha.endDate}
@@ -206,7 +208,7 @@ export const ChartViewer: React.FC<{ defaultSubTab?: 'western' | 'vedic' | 'tran
                     <span className="text-amber-300 font-bold font-mono text-sm">
                       {siderealChart.dashaReport.currentMahadasha.percentagePassed}%
                     </span>
-                    <p className="text-[10px] text-slate-500">elapsed</p>
+                    <p className="text-[10px] text-slate-500">{t.elapsed}</p>
                   </div>
                 </div>
               )}
@@ -217,10 +219,10 @@ export const ChartViewer: React.FC<{ defaultSubTab?: 'western' | 'vedic' | 'tran
           <div className="rounded-2xl bg-slate-900/80 border border-slate-800 overflow-hidden shadow-xl">
             <div className="px-4 py-3 border-b border-slate-800 bg-slate-900/90 flex items-center justify-between gap-2">
               <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                Navagrahas (Lahiri Sidereal)
+                {language === 'ta' ? 'நவக்கிரகங்கள் (லஹிரி வேத முறை)' : 'Navagrahas (Lahiri Sidereal)'}
               </span>
               <span className="text-[11px] text-slate-400 hidden sm:inline">
-                Used for Timing & House Analysis
+                {language === 'ta' ? 'பாவகம் மற்றும் தசா கணிதம்' : 'Used for Timing & House Analysis'}
               </span>
             </div>
 
@@ -235,13 +237,13 @@ export const ChartViewer: React.FC<{ defaultSubTab?: 'western' | 'vedic' | 'tran
               <table className="w-full text-left text-xs min-w-[580px]">
                 <thead className="bg-slate-950/60 text-slate-400 uppercase tracking-wider border-b border-slate-800 text-[10px] sm:text-xs">
                   <tr>
-                    <th className="py-2.5 px-3 sm:py-3 sm:px-4">Planet</th>
-                    <th className="py-2.5 px-3 sm:py-3 sm:px-4">Sign</th>
+                    <th className="py-2.5 px-3 sm:py-3 sm:px-4">{t.colPoint}</th>
+                    <th className="py-2.5 px-3 sm:py-3 sm:px-4">{t.colSignDeg}</th>
                     <th className="py-2.5 px-3 sm:py-3 sm:px-4">Degrees</th>
-                    <th className="py-2.5 px-3 sm:py-3 sm:px-4">House</th>
-                    <th className="py-2.5 px-3 sm:py-3 sm:px-4">Nakshatra & Pada</th>
-                    <th className="py-2.5 px-3 sm:py-3 sm:px-4">Star Lord</th>
-                    <th className="py-2.5 px-3 sm:py-3 sm:px-4 text-center">Status</th>
+                    <th className="py-2.5 px-3 sm:py-3 sm:px-4">{t.colHouse}</th>
+                    <th className="py-2.5 px-3 sm:py-3 sm:px-4">{t.colNakshatraPada}</th>
+                    <th className="py-2.5 px-3 sm:py-3 sm:px-4">{t.colLord}</th>
+                    <th className="py-2.5 px-3 sm:py-3 sm:px-4 text-center">{t.colStatus}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
@@ -253,11 +255,11 @@ export const ChartViewer: React.FC<{ defaultSubTab?: 'western' | 'vedic' | 'tran
                           <span className="text-sm sm:text-base text-amber-300 font-mono">
                             {PLANET_SYMBOLS[planet.name] || '•'}
                           </span>
-                          {planet.name}
+                          {getTranslatedPlanet(planet.name, language)}
                         </td>
                         <td className="py-2.5 px-3 sm:py-3 sm:px-4">
                           <span className={`px-2 py-0.5 rounded-full border text-[10px] sm:text-[11px] font-medium ${badgeClass}`}>
-                            {planet.sign}
+                            {getTranslatedZodiac(planet.sign, language)}
                           </span>
                         </td>
                         <td className="py-2.5 px-3 sm:py-3 sm:px-4 font-mono text-slate-300 text-[11px] sm:text-xs">
@@ -267,18 +269,18 @@ export const ChartViewer: React.FC<{ defaultSubTab?: 'western' | 'vedic' | 'tran
                           H{planet.house}
                         </td>
                         <td className="py-2.5 px-3 sm:py-3 sm:px-4 text-slate-300 text-[11px] sm:text-xs">
-                          {planet.nakshatra} <span className="text-amber-400 font-medium">P{planet.nakshatraPada}</span>
+                          {getTranslatedNakshatra(planet.nakshatra || '', language)} <span className="text-amber-400 font-medium">P{planet.nakshatraPada}</span>
                         </td>
                         <td className="py-2.5 px-3 sm:py-3 sm:px-4 text-slate-400">
-                          {planet.nakshatraLord}
+                          {getTranslatedPlanet(planet.nakshatraLord || '', language)}
                         </td>
                         <td className="py-2.5 px-3 sm:py-3 sm:px-4 text-center">
                           {planet.isRetrograde ? (
                             <span className="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[9px] sm:text-[10px] font-bold">
-                              ℞ RETRO
+                              {t.retrograde}
                             </span>
                           ) : (
-                            <span className="text-[10px] text-emerald-400 font-medium">Direct</span>
+                            <span className="text-[10px] text-emerald-400 font-medium">{t.direct}</span>
                           )}
                         </td>
                       </tr>
