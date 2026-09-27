@@ -1,0 +1,81 @@
+import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { AstrologyProvider, useAstrology } from './context/AstrologyContext';
+import { Navbar } from './components/Navbar';
+import { OracleChat } from './components/OracleChat';
+import { ChartViewer } from './components/ChartViewer';
+import { SettingsModal } from './components/SettingsModal';
+import { BackgroundStars } from './components/BackgroundStars';
+
+const MainContent: React.FC = () => {
+  const { activeView } = useAstrology();
+
+  return (
+    <div className="relative z-10 flex flex-col min-h-screen">
+      <Navbar />
+
+      <main className="flex-1">
+        <AnimatePresence mode="wait">
+          {activeView === 'chat' && (
+            <motion.div
+              key="chat"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.25 }}
+            >
+              <OracleChat />
+            </motion.div>
+          )}
+
+          {activeView === 'charts' && (
+            <motion.div
+              key="charts"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.25 }}
+            >
+              <ChartViewer defaultSubTab="vedic" />
+            </motion.div>
+          )}
+
+          {activeView === 'transits' && (
+            <motion.div
+              key="transits"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.25 }}
+            >
+              <ChartViewer defaultSubTab="transits" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </main>
+
+      <SettingsModal />
+    </div>
+  );
+};
+
+export function App() {
+  return (
+    <AstrologyProvider>
+      <div className="min-h-screen bg-slate-950 text-slate-100 relative overflow-hidden selection:bg-purple-600 selection:text-white">
+        {/* Subtle radial ambient cosmic glow */}
+        <div className="fixed -top-40 -left-40 w-96 h-96 bg-purple-600/10 rounded-full blur-[128px] pointer-events-none" />
+        <div className="fixed top-1/3 -right-40 w-96 h-96 bg-amber-500/10 rounded-full blur-[128px] pointer-events-none" />
+        <div className="fixed -bottom-40 left-1/3 w-96 h-96 bg-cyan-600/10 rounded-full blur-[128px] pointer-events-none" />
+
+        {/* Dynamic canvas stars */}
+        <BackgroundStars />
+
+        {/* Main application tree */}
+        <MainContent />
+      </div>
+    </AstrologyProvider>
+  );
+}
+
+export default App;
