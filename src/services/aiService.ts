@@ -105,7 +105,7 @@ class AIService {
     try {
       const testClient = new GoogleGenAI({ apiKey: key });
       const response = await testClient.models.generateContent({
-        model: 'gemini-3.5-flash-lite',
+        model: 'gemini-3.5-flash',
         contents: 'Ping: respond with "OK"'
       });
       return !!response.text;
@@ -156,7 +156,7 @@ class AIService {
     });
 
     // Single direct call to safe free-tier model — no fallback loop
-    const model = 'gemini-3.5-flash-lite';
+    const model = 'gemini-3.5-flash';
     let fullResponse = '';
 
     try {
