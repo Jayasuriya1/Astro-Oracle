@@ -106,6 +106,15 @@ export interface DashaReport {
   balanceYears: number;
 }
 
+export interface NavamshaChart {
+  lagna: {
+    sign: string;
+    signIndex: number;
+    formattedDegree: string;
+  };
+  planets: PlanetPosition[];
+}
+
 export interface VedicChart {
   system: 'Sidereal (Vedic / Lahiri)';
   houseSystem: 'Whole Sign / Equal';
@@ -122,7 +131,64 @@ export interface VedicChart {
   planets: PlanetPosition[];
   houses: HouseCusp[];
   navamshaSummary?: Record<string, string>;
+  navamshaChart?: NavamshaChart;
   dashaReport?: DashaReport;
+}
+
+export interface PanchangamData {
+  tithi: {
+    number: number;
+    name: string;
+    paksha: 'Shukla' | 'Krishna';
+    percentagePassed: number;
+  };
+  nakshatra: {
+    name: string;
+    pada: number;
+    lord: string;
+  };
+  yoga: {
+    number: number;
+    name: string;
+  };
+  karana: {
+    name: string;
+  };
+  activeHora: {
+    lord: string;
+    startTime: string;
+    endTime: string;
+  };
+  rahuKalam: {
+    startTime: string;
+    endTime: string;
+    isCurrent: boolean;
+  };
+  yamagandam: {
+    startTime: string;
+    endTime: string;
+    isCurrent: boolean;
+  };
+}
+
+export interface PoruthamItem {
+  id: string;
+  name: string;
+  sanskrit: string;
+  status: 'Compatible' | 'Moderate' | 'Incompatible';
+  score: number;
+  maxScore: number;
+  description: string;
+}
+
+export interface PoruthamReport {
+  profile1: { name: string; moonSign: string; nakshatra: string; pada: number };
+  profile2: { name: string; moonSign: string; nakshatra: string; pada: number };
+  totalScore: number;
+  maxScore: number;
+  percentage: number;
+  verdict: 'Excellent Match' | 'Good Match' | 'Average Match' | 'Challenging / Needs Remediation';
+  items: PoruthamItem[];
 }
 
 export interface TransitData {
@@ -140,6 +206,7 @@ export interface CalculatedAstrologyData {
     tropical: TransitData;
     sidereal: TransitData;
   };
+  panchangam?: PanchangamData;
   calculatedAt: string;
 }
 

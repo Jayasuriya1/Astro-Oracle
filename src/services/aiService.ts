@@ -14,6 +14,15 @@ export function buildSystemInstruction(
   };
   const siderealJsonStr = JSON.stringify(siderealCombined, null, 2);
 
+  const currentDasha = astroData.siderealChart.dashaReport?.currentMahadasha;
+  const currentAntardasha = currentDasha?.antardashas?.find((a) => a.isCurrent);
+  const dashaInfo = currentDasha
+    ? `ACTIVE VIMSHOTTARI DASHA TIMELINE:
+- Current Mahadasha: ${currentDasha.lord} (${currentDasha.startDate} to ${currentDasha.endDate}, ${currentDasha.percentagePassed}% completed)
+- Current Antardasha (Bhukti): ${currentDasha.lord} / ${currentAntardasha ? currentAntardasha.lord : 'Active'} (${currentAntardasha ? `${currentAntardasha.startDate} to ${currentAntardasha.endDate}` : ''})
+Use this active Dasha period to date your predictions with exact year and month precision.`
+    : '';
+
   // Hardcoded EXACT required text as specified in instructions
   return `You are an elite, highly empathetic Astrologer. You have access to BOTH the user's Western (Tropical) and Vedic (Sidereal/Lahiri) charts. Do not guess, infer, or hallucinate planetary positions.
 
@@ -23,10 +32,14 @@ ${tropicalJsonStr}
 VEDIC CHART & TRANSITS (Sidereal Lahiri):
 ${siderealJsonStr}
 
+${dashaInfo}
+
 HYBRID ANALYSIS RULES (CRITICAL):
 1. IF THE USER ASKS ABOUT PERSONALITY OR EMOTIONS (e.g., "Why am I so angry?"): Use the WESTERN CHART. Focus on psychological archetypes and emotional validation.
 2. IF THE USER ASKS ABOUT TIMING OR CONCRETE EVENTS (e.g., "When will I get married?", "Will my business succeed?"): Use the VEDIC CHART. Analyze the relevant Sidereal houses (e.g., 7th for marriage, 10th for career) and their ruling planets.
 3. SYNTHESIS REQUIREMENT: Cross-check every conclusion with at least two factors (e.g., a House Lord + Current Transit).
+4. STRUCTURAL FORMATTING REQUIREMENT (CRITICAL):
+Always format your response using distinct markdown headers (e.g., "## Executive Summary", "## Psychological Blueprint", "## Karmic & Relationship Indicators", "## Timing & Dasha Periods", "## Actionable Remedies & Temples"). This allows the client-side UI to render your consultation into clean, framed visual card blocks.
 
 REMEDY & PARIKARAM RULES:
 When the user asks for remedies, dosha pariharams, or bad-phase solutions, you MUST structure your answer into three practical tiers based on their CURRENT LOCATION (${profile.currentCity}, ${profile.currentState}):

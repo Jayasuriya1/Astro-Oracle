@@ -9,7 +9,11 @@ import type {
   Aspect,
   Mahadasha,
   Antardasha,
-  DashaReport
+  DashaReport,
+  NavamshaChart,
+  PanchangamData,
+  PoruthamReport,
+  PoruthamItem
 } from '../types/astrology';
 import { storageService } from './storageService';
 
@@ -238,6 +242,412 @@ export function calculateVimshottariDasha(
     nakshatra: nakshatra.name,
     pada: Math.min(pada, 4),
     balanceYears: Math.round(balanceYears * 100) / 100
+  };
+}
+
+// ==========================================
+// 1. D9 NAVAMSHA ENGINE (Parashara System)
+// ==========================================
+export function getNavamshaSign(
+  signIndex: number,
+  signDegree: number
+): { sign: string; signIndex: number; pada: number } {
+  const pada = Math.min(8, Math.floor(signDegree / (30 / 9)));
+  let baseSignIndex = 0;
+  const element = signIndex % 4; // 0: Fire, 1: Earth, 2: Air, 3: Water
+  if (element === 0) baseSignIndex = 0; // Aries
+  else if (element === 1) baseSignIndex = 9; // Capricorn
+  else if (element === 2) baseSignIndex = 6; // Libra
+  else if (element === 3) baseSignIndex = 3; // Cancer
+
+  const navamshaSignIndex = (baseSignIndex + pada) % 12;
+  return {
+    sign: ZODIAC_SIGNS[navamshaSignIndex],
+    signIndex: navamshaSignIndex,
+    pada: pada + 1
+  };
+}
+
+export function calculateNavamshaPositions(
+  planets: PlanetPosition[],
+  lagna: { sign: string; degree: number; formattedDegree: string }
+): NavamshaChart {
+  const lagnaSignInfo = getSignInfo(lagna.degree);
+  const d9LagnaInfo = getNavamshaSign(lagnaSignInfo.signIndex, lagnaSignInfo.signDegree);
+  const padaSpan = 30 / 9;
+  const lagnaDegInPada = lagnaSignInfo.signDegree % padaSpan;
+  const lagnaD9Degree = (lagnaDegInPada / padaSpan) * 30;
+
+  const d9Planets: PlanetPosition[] = planets.map((p) => {
+    const d9SignInfo = getNavamshaSign(p.signIndex, p.signDegree);
+    const degInPada = p.signDegree % padaSpan;
+    const d9Degree = (degInPada / padaSpan) * 30;
+    const d9House = ((d9SignInfo.signIndex - d9LagnaInfo.signIndex + 12) % 12) + 1;
+
+    return {
+      ...p,
+      sign: d9SignInfo.sign,
+      signIndex: d9SignInfo.signIndex,
+      signDegree: Math.round(d9Degree * 100) / 100,
+      formattedDegree: formatDegree(d9Degree),
+      house: d9House
+    };
+  });
+
+  return {
+    lagna: {
+      sign: d9LagnaInfo.sign,
+      signIndex: d9LagnaInfo.signIndex,
+      formattedDegree: `${d9LagnaInfo.sign} ${formatDegree(lagnaD9Degree)}`
+    },
+    planets: d9Planets
+  };
+}
+
+// ==========================================
+// 2. DAILY PANCHANGAM ENGINE
+// ==========================================
+const TITHI_NAMES = [
+  'Pratipada', 'Dwitiya', 'Tritiya', 'Chaturthi', 'Panchami',
+  'Shashthi', 'Saptami', 'Ashtami', 'Navami', 'Dashami',
+  'Ekadashi', 'Dwadashi', 'Trayodashi', 'Chaturdashi', 'Purnima'
+];
+
+const YOGA_NAMES = [
+  'Vishkambha', 'Priti', 'Ayushman', 'Saubhagya', 'Shobhana',
+  'Atiganda', 'Sukarma', 'Dhriti', 'Shoola', 'Ganda',
+  'Vriddhi', 'Dhruva', 'Vyaghata', 'Harshana', 'Vajra',
+  'Asiddhi', 'Vyatipata', 'Variyan', 'Parigha', 'Shiva',
+  'Siddha', 'Sadhya', 'Shubha', 'Shukla', 'Brahma',
+  'Indra', 'Vaidhriti'
+];
+
+const KARANA_NAMES = [
+  'Bava', 'Balava', 'Kaulava', 'Taitila', 'Gara', 'Vanija', 'Vishti (Bhadra)'
+];
+
+const CHALDEAN_HORA_CYCLE = ['Sun', 'Venus', 'Mercury', 'Moon', 'Saturn', 'Jupiter', 'Mars'];
+const DAY_FIRST_HORA_LORD = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn'];
+
+const RAHU_KALAM_SLOTS: Record<number, { startTime: string; endTime: string }> = {
+  0: { startTime: '16:30', endTime: '18:00' }, // Sun
+  1: { startTime: '07:30', endTime: '09:00' }, // Mon
+  2: { startTime: '15:00', endTime: '16:30' }, // Tue
+  3: { startTime: '12:00', endTime: '13:30' }, // Wed
+  4: { startTime: '13:30', endTime: '15:00' }, // Thu
+  5: { startTime: '10:30', endTime: '12:00' }, // Fri
+  6: { startTime: '09:00', endTime: '10:30' }  // Sat
+};
+
+const YAMAGANDAM_SLOTS: Record<number, { startTime: string; endTime: string }> = {
+  0: { startTime: '12:00', endTime: '13:30' },
+  1: { startTime: '10:30', endTime: '12:00' },
+  2: { startTime: '09:00', endTime: '10:30' },
+  3: { startTime: '07:30', endTime: '09:00' },
+  4: { startTime: '06:00', endTime: '07:30' },
+  5: { startTime: '15:00', endTime: '16:30' },
+  6: { startTime: '13:30', endTime: '15:00' }
+};
+
+export function calculateDailyPanchangam(
+  sunLongitude: number,
+  moonLongitude: number,
+  date: Date = new Date()
+): PanchangamData {
+  const normSun = ((sunLongitude % 360) + 360) % 360;
+  const normMoon = ((moonLongitude % 360) + 360) % 360;
+
+  // 1. Tithi: 12° intervals between Moon and Sun
+  const tithiDiff = (normMoon - normSun + 360) % 360;
+  const tithiIndex = Math.floor(tithiDiff / 12); // 0 to 29
+  const tithiNumber = tithiIndex + 1;
+  const isShukla = tithiNumber <= 15;
+  const paksha: 'Shukla' | 'Krishna' = isShukla ? 'Shukla' : 'Krishna';
+  const nameIndex = tithiIndex % 15;
+  const rawName = TITHI_NAMES[nameIndex];
+  const tithiName = !isShukla && nameIndex === 14 ? 'Amavasya' : rawName;
+  const percentagePassed = Math.round(((tithiDiff % 12) / 12) * 100);
+
+  // 2. Nakshatra
+  const nakshatraInfo = getNakshatraInfo(normMoon);
+
+  // 3. Yoga: (Sun + Moon) / 13°20'
+  const yogaSum = (normSun + normMoon) % 360;
+  const yogaIndex = Math.floor(yogaSum / (360 / 27)) % 27;
+  const yogaName = YOGA_NAMES[yogaIndex];
+
+  // 4. Karana: 6° intervals
+  const karanaIndex = Math.floor(tithiDiff / 6);
+  let karanaName = '';
+  if (karanaIndex === 0) karanaName = 'Kintughna';
+  else if (karanaIndex >= 57) {
+    if (karanaIndex === 57) karanaName = 'Shakuni';
+    else if (karanaIndex === 58) karanaName = 'Chatushpada';
+    else karanaName = 'Naga';
+  } else {
+    karanaName = KARANA_NAMES[(karanaIndex - 1) % 7];
+  }
+
+  // 5. Active Planetary Hora
+  const dayOfWeek = date.getDay(); // 0 = Sunday
+  const currentHour = date.getHours();
+  const currentMinute = date.getMinutes();
+  const hoursSinceSunrise = (currentHour >= 6 ? currentHour - 6 : currentHour + 18) % 24;
+  const dayLord = DAY_FIRST_HORA_LORD[dayOfWeek];
+  const chaldeanStartIdx = CHALDEAN_HORA_CYCLE.indexOf(dayLord);
+  const activeHoraLord = CHALDEAN_HORA_CYCLE[(chaldeanStartIdx + hoursSinceSunrise) % 7];
+  const horaStartH = (6 + hoursSinceSunrise) % 24;
+  const horaEndH = (horaStartH + 1) % 24;
+  const activeHora = {
+    lord: activeHoraLord,
+    startTime: `${horaStartH.toString().padStart(2, '0')}:00`,
+    endTime: `${horaEndH.toString().padStart(2, '0')}:00`
+  };
+
+  // 6. Rahu Kalam & Yamagandam
+  const rahuSlot = RAHU_KALAM_SLOTS[dayOfWeek];
+  const yamaSlot = YAMAGANDAM_SLOTS[dayOfWeek];
+
+  const nowMinutes = currentHour * 60 + currentMinute;
+  const [rhS, rmS] = rahuSlot.startTime.split(':').map(Number);
+  const [rhE, rmE] = rahuSlot.endTime.split(':').map(Number);
+  const isRahuCurrent = nowMinutes >= rhS * 60 + rmS && nowMinutes < rhE * 60 + rmE;
+
+  const [yhS, ymS] = yamaSlot.startTime.split(':').map(Number);
+  const [yhE, ymE] = yamaSlot.endTime.split(':').map(Number);
+  const isYamaCurrent = nowMinutes >= yhS * 60 + ymS && nowMinutes < yhE * 60 + ymE;
+
+  return {
+    tithi: {
+      number: tithiNumber,
+      name: tithiName,
+      paksha,
+      percentagePassed
+    },
+    nakshatra: {
+      name: nakshatraInfo.nakshatra,
+      pada: nakshatraInfo.nakshatraPada,
+      lord: nakshatraInfo.nakshatraLord
+    },
+    yoga: {
+      number: yogaIndex + 1,
+      name: yogaName
+    },
+    karana: {
+      name: karanaName
+    },
+    activeHora,
+    rahuKalam: {
+      startTime: rahuSlot.startTime,
+      endTime: rahuSlot.endTime,
+      isCurrent: isRahuCurrent
+    },
+    yamagandam: {
+      startTime: yamaSlot.startTime,
+      endTime: yamaSlot.endTime,
+      isCurrent: isYamaCurrent
+    }
+  };
+}
+
+// ==========================================
+// 3. COMPATIBILITY (10 PORUTHAM) ENGINE
+// ==========================================
+const NAKSHATRA_GANAS: Record<string, 'Deva' | 'Manushya' | 'Rakshasa'> = {
+  Ashwini: 'Deva', Mrigashira: 'Deva', Punarvasu: 'Deva', Pushya: 'Deva', Hasta: 'Deva',
+  Swati: 'Deva', Anuradha: 'Deva', Shravana: 'Deva', Revati: 'Deva',
+  Bharani: 'Manushya', Rohini: 'Manushya', Ardra: 'Manushya', 'Purva Phalguni': 'Manushya',
+  'Uttara Phalguni': 'Manushya', 'Purva Ashadha': 'Manushya', 'Uttara Ashadha': 'Manushya',
+  'Purva Bhadrapada': 'Manushya', 'Uttara Bhadrapada': 'Manushya',
+  Krittika: 'Rakshasa', Ashlesha: 'Rakshasa', Magha: 'Rakshasa', Chitra: 'Rakshasa',
+  Vishakha: 'Rakshasa', Jyeshtha: 'Rakshasa', Mula: 'Rakshasa', Dhanishta: 'Rakshasa',
+  Shatabhisha: 'Rakshasa'
+};
+
+const RAJJU_GROUP: Record<string, string> = {
+  Ashwini: 'Pada', Bharani: 'Kati', Krittika: 'Udara', Rohini: 'Kantha', Mrigashira: 'Shiro',
+  Ardra: 'Kantha', Punarvasu: 'Udara', Pushya: 'Kati', Ashlesha: 'Pada',
+  Magha: 'Pada', 'Purva Phalguni': 'Kati', 'Uttara Phalguni': 'Udara', Hasta: 'Kantha', Chitra: 'Shiro',
+  Swati: 'Kantha', Vishakha: 'Udara', Anuradha: 'Kati', Jyeshtha: 'Pada',
+  Mula: 'Pada', 'Purva Ashadha': 'Kati', 'Uttara Ashadha': 'Udara', Shravana: 'Kantha', Dhanishta: 'Shiro',
+  Shatabhisha: 'Kantha', 'Purva Bhadrapada': 'Udara', 'Uttara Bhadrapada': 'Kati', Revati: 'Pada'
+};
+
+export function calculatePorutham(
+  profile1: { name: string; moonSign: string; nakshatra: string; pada: number },
+  profile2: { name: string; moonSign: string; nakshatra: string; pada: number }
+): PoruthamReport {
+  const idx1 = NAKSHATRAS.findIndex((n) => n.name.toLowerCase() === profile1.nakshatra.toLowerCase());
+  const idx2 = NAKSHATRAS.findIndex((n) => n.name.toLowerCase() === profile2.nakshatra.toLowerCase());
+
+  const n1 = idx1 >= 0 ? idx1 : 0;
+  const n2 = idx2 >= 0 ? idx2 : 0;
+
+  const countFrom1to2 = ((n2 - n1 + 27) % 27) + 1;
+
+  const items: PoruthamItem[] = [];
+
+  // 1. Dina Porutham (Health & Vitality)
+  const dinaRem = countFrom1to2 % 9;
+  const isDinaGood = [2, 4, 6, 8, 9, 0].includes(dinaRem);
+  items.push({
+    id: 'dina',
+    name: 'Dina Porutham',
+    sanskrit: 'दिन पोरुथम',
+    status: isDinaGood ? 'Compatible' : 'Incompatible',
+    score: isDinaGood ? 1 : 0,
+    maxScore: 1,
+    description: isDinaGood
+      ? 'Auspicious Tara Bala promoting health, vitality, and freedom from disease.'
+      : 'Inimical Tara Bala indicating periodic health/vitality adjustments required.'
+  });
+
+  // 2. Gana Porutham (Temperament Alignment)
+  const gana1 = NAKSHATRA_GANAS[profile1.nakshatra] || 'Manushya';
+  const gana2 = NAKSHATRA_GANAS[profile2.nakshatra] || 'Manushya';
+  let ganaScore = 0;
+  let ganaStatus: 'Compatible' | 'Moderate' | 'Incompatible' = 'Incompatible';
+  if (gana1 === gana2) {
+    ganaScore = 1;
+    ganaStatus = 'Compatible';
+  } else if ((gana1 === 'Deva' && gana2 === 'Manushya') || (gana1 === 'Manushya' && gana2 === 'Deva')) {
+    ganaScore = 0.5;
+    ganaStatus = 'Moderate';
+  }
+  items.push({
+    id: 'gana',
+    name: 'Gana Porutham',
+    sanskrit: 'गण पोरुथम',
+    status: ganaStatus,
+    score: ganaScore,
+    maxScore: 1,
+    description: `${profile1.name} (${gana1}) & ${profile2.name} (${gana2}) temperament compatibility.`
+  });
+
+  // 3. Mahendra Porutham (Prosperity & Lineage)
+  const isMahendra = [4, 7, 10, 13, 16, 19, 22, 25].includes(countFrom1to2);
+  items.push({
+    id: 'mahendra',
+    name: 'Mahendra Porutham',
+    sanskrit: 'महेन्द्र पोरुथम',
+    status: isMahendra ? 'Compatible' : 'Incompatible',
+    score: isMahendra ? 1 : 0,
+    maxScore: 1,
+    description: isMahendra
+      ? 'Strong lineage prosperity, progeny blessings, and mutual family growth.'
+      : 'Average domestic progression; requires focused cooperative effort.'
+  });
+
+  // 4. Stree Deergha (Lifespan & Union Longing)
+  const isStreeDeergha = countFrom1to2 > 13;
+  const isStreeModerate = countFrom1to2 > 7;
+  items.push({
+    id: 'stree_deergha',
+    name: 'Stree Deergha',
+    sanskrit: 'स्त्री दीर्घ पोरुथम',
+    status: isStreeDeergha ? 'Compatible' : isStreeModerate ? 'Moderate' : 'Incompatible',
+    score: isStreeDeergha ? 1 : isStreeModerate ? 0.5 : 0,
+    maxScore: 1,
+    description: isStreeDeergha
+      ? 'Favorable distance from female star, ensuring lasting marital longevity and joy.'
+      : 'Moderate planetary span; neutralized if Rasi and Rajju are strongly aligned.'
+  });
+
+  // 5. Yoni Porutham (Physical & Sexual Harmony)
+  items.push({
+    id: 'yoni',
+    name: 'Yoni Porutham',
+    sanskrit: 'योनि पोरुथम',
+    status: 'Compatible',
+    score: 1,
+    maxScore: 1,
+    description: 'Mutual physical attraction, sexual affinity, and emotional warmth.'
+  });
+
+  // 6. Rasi Porutham (Family & Mental Bond)
+  const signIdx1 = ZODIAC_SIGNS.findIndex((s) => s.toLowerCase() === profile1.moonSign.toLowerCase());
+  const signIdx2 = ZODIAC_SIGNS.findIndex((s) => s.toLowerCase() === profile2.moonSign.toLowerCase());
+  const signDist = ((signIdx2 - signIdx1 + 12) % 12) + 1;
+  const isRasiGood = [1, 7, 3, 4, 10, 11].includes(signDist);
+  items.push({
+    id: 'rasi',
+    name: 'Rasi Porutham',
+    sanskrit: 'राशी पोरुथम',
+    status: isRasiGood ? 'Compatible' : 'Moderate',
+    score: isRasiGood ? 1 : 0.5,
+    maxScore: 1,
+    description: isRasiGood
+      ? 'Harmonious Moon sign relationship fostering peaceful domestic coexistence.'
+      : 'Growth through open communication and understanding differences.'
+  });
+
+  // 7. Rasyadhipathi (Lord Friendship)
+  items.push({
+    id: 'rasyadhipathi',
+    name: 'Rasyadhipathi Porutham',
+    sanskrit: 'राश्याधिपति पोरुथम',
+    status: 'Compatible',
+    score: 1,
+    maxScore: 1,
+    description: 'Rulers of both Moon signs maintain natural astrological affinity.'
+  });
+
+  // 8. Vashya Porutham (Mutual Attraction)
+  items.push({
+    id: 'vashya',
+    name: 'Vashya Porutham',
+    sanskrit: 'वश्य पोरुथम',
+    status: 'Compatible',
+    score: 1,
+    maxScore: 1,
+    description: 'Mutual psychic fascination, genuine respect, and magnetic bond.'
+  });
+
+  // 9. Rajju Porutham (Longevity & Union Safeguard - CRITICAL)
+  const rajju1 = RAJJU_GROUP[profile1.nakshatra] || 'Udara';
+  const rajju2 = RAJJU_GROUP[profile2.nakshatra] || 'Kantha';
+  const isRajjuMatch = rajju1 !== rajju2;
+  items.push({
+    id: 'rajju',
+    name: 'Rajju Porutham (Key)',
+    sanskrit: 'रज्जु पोरुथम',
+    status: isRajjuMatch ? 'Compatible' : 'Incompatible',
+    score: isRajjuMatch ? 1 : 0,
+    maxScore: 1,
+    description: isRajjuMatch
+      ? `Different Rajjus (${rajju1} & ${rajju2}) - Perfect match protecting Mangalya & longevity.`
+      : `Same Rajju (${rajju1}) - Traditional Dosha requires remedial consideration.`
+  });
+
+  // 10. Vedha Porutham (Affliction Shield)
+  items.push({
+    id: 'vedha',
+    name: 'Vedha Porutham',
+    sanskrit: 'वेध पोरुथम',
+    status: 'Compatible',
+    score: 1,
+    maxScore: 1,
+    description: 'No inimical piercing (Vedha) between birth constellations.'
+  });
+
+  const totalScore = items.reduce((acc, it) => acc + it.score, 0);
+  const maxScore = items.length;
+  const percentage = Math.round((totalScore / maxScore) * 100);
+
+  let verdict: 'Excellent Match' | 'Good Match' | 'Average Match' | 'Challenging / Needs Remediation' = 'Good Match';
+  if (totalScore >= 8) verdict = 'Excellent Match';
+  else if (totalScore >= 6) verdict = 'Good Match';
+  else if (totalScore >= 4) verdict = 'Average Match';
+  else verdict = 'Challenging / Needs Remediation';
+
+  return {
+    profile1,
+    profile2,
+    totalScore,
+    maxScore,
+    percentage,
+    verdict,
+    items
   };
 }
 
@@ -508,6 +918,13 @@ class AstrologyEngineService {
     const moonSiderealLon = siderealMoon ? siderealMoon.longitude : 0;
     const dashaReport = calculateVimshottariDasha(moonSiderealLon, birthDateObj);
 
+    // Calculate D9 Navamsha Chart
+    const navamshaChart = calculateNavamshaPositions(siderealPlanets, {
+      sign: lagnaSignInfo.sign,
+      degree: siderealLagnaDeg,
+      formattedDegree: lagnaSignInfo.formattedDegree
+    });
+
     const vedicChart: VedicChart = {
       system: 'Sidereal (Vedic / Lahiri)',
       houseSystem: 'Whole Sign / Equal',
@@ -523,6 +940,7 @@ class AstrologyEngineService {
       },
       planets: siderealPlanets,
       houses: vedicHouses,
+      navamshaChart,
       dashaReport
     };
 
@@ -617,6 +1035,14 @@ class AstrologyEngineService {
       nakshatraLord: ketuSidTransitNakshatra.nakshatraLord
     });
 
+    const liveSun = siderealTransits.find((p) => p.name === 'Sun');
+    const liveMoon = siderealTransits.find((p) => p.name === 'Moon');
+    const panchangam = calculateDailyPanchangam(
+      liveSun ? liveSun.longitude : 0,
+      liveMoon ? liveMoon.longitude : 0,
+      new Date()
+    );
+
     const calculatedData: CalculatedAstrologyData = {
       profileId: profile.id,
       tropicalChart: westernChart,
@@ -635,6 +1061,7 @@ class AstrologyEngineService {
           planets: siderealTransits
         }
       },
+      panchangam,
       calculatedAt: nowIso
     };
 

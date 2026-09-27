@@ -19,6 +19,9 @@ interface AstrologyContextType {
   setSettingsModalMode: (mode: 'edit' | 'add_member') => void;
   activeView: 'chat' | 'charts' | 'transits';
   setActiveView: (view: 'chat' | 'charts' | 'transits') => void;
+  isExportOpen: boolean;
+  setIsExportOpen: (open: boolean) => void;
+  scrollToPlanet: (planetName: string) => void;
   setIsSettingsOpen: (open: boolean) => void;
   switchProfile: (profileId: string) => Promise<void>;
   addProfile: (newProfileData: Omit<UserProfile, 'id' | 'createdAt'>) => Promise<void>;
@@ -46,6 +49,28 @@ export const AstrologyProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [settingsModalMode, setSettingsModalMode] = useState<'edit' | 'add_member'>('edit');
   const [activeView, setActiveView] = useState<'chat' | 'charts' | 'transits'>('chat');
+  const [isExportOpen, setIsExportOpen] = useState<boolean>(false);
+
+  const scrollToPlanet = useCallback((planetName: string) => {
+    const targetId = `planet-row-${planetName.toLowerCase()}`;
+    const el = document.getElementById(targetId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('ring-2', 'ring-amber-400');
+      setTimeout(() => el.classList.remove('ring-2', 'ring-amber-400'), 2000);
+    } else {
+      // If element not currently in DOM, switch to 'charts' or ensure rendered
+      setActiveView('charts');
+      setTimeout(() => {
+        const delayedEl = document.getElementById(targetId);
+        if (delayedEl) {
+          delayedEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          delayedEl.classList.add('ring-2', 'ring-amber-400');
+          setTimeout(() => delayedEl.classList.remove('ring-2', 'ring-amber-400'), 2000);
+        }
+      }, 300);
+    }
+  }, [setActiveView]);
 
   // Load initial profiles, active profile, and isolated data on mount
   useEffect(() => {
@@ -345,6 +370,9 @@ export const AstrologyProvider: React.FC<{ children: ReactNode }> = ({ children 
         setSettingsModalMode,
         activeView,
         setActiveView,
+        isExportOpen,
+        setIsExportOpen,
+        scrollToPlanet,
         setIsSettingsOpen,
         switchProfile,
         addProfile,

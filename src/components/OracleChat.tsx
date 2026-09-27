@@ -17,10 +17,27 @@ import {
   HeartHandshake,
   Clock,
   ArrowRight,
-  MessageSquare
+  MessageSquare,
+  Download
 } from 'lucide-react';
 import { useAstrology } from '../context/AstrologyContext';
-import { SouthIndianChart } from './SouthIndianChart';
+import { VedicChart } from './VedicChart';
+import { WesternWheel } from './WesternWheel';
+
+const PLANET_SYMBOLS: Record<string, string> = {
+  Sun: '☉',
+  Moon: '☽',
+  Mercury: '☿',
+  Venus: '♀',
+  Mars: '♂',
+  Jupiter: '♃',
+  Saturn: '♄',
+  Uranus: '♅',
+  Neptune: '♆',
+  Pluto: '♇',
+  Rahu: '☊',
+  Ketu: '☋'
+};
 
 const SUGGESTION_CHIPS = [
   { text: 'When will my career take off?', icon: Compass },
@@ -42,12 +59,14 @@ export const OracleChat: React.FC = () => {
     clearChat,
     setIsSettingsOpen,
     astrologyData,
-    setActiveView
+    setActiveView,
+    setIsExportOpen
   } = useAstrology();
 
   const [input, setInput] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [mobileTab, setMobileTab] = useState<'chat' | 'chart'>('chat');
+  const [leftChartSystem, setLeftChartSystem] = useState<'vedic' | 'western'>('vedic');
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -93,40 +112,94 @@ export const OracleChat: React.FC = () => {
   const sun = sidereal?.planets?.find((p) => p.name === 'Sun');
 
   return (
-    <div className="flex flex-col lg:flex-row h-full w-full max-w-7xl mx-auto px-2.5 sm:px-5 lg:px-6 pt-1.5 sm:pt-2 pb-20 md:pb-3 gap-3.5 lg:gap-5 overflow-hidden">
+    <div
+      id="astrology-studio-content"
+      className="flex flex-col lg:flex-row h-full w-full max-w-7xl mx-auto px-2.5 sm:px-5 lg:px-6 pt-1.5 sm:pt-2 pb-20 md:pb-3 gap-3.5 lg:gap-5 overflow-hidden"
+    >
       {/* ============================================================ */}
-      {/* DESKTOP STUDIO: LEFT COLUMN (40% width, Visual Chart & Dasha) */}
+      {/* DESKTOP STUDIO: LEFT COLUMN (42% width, Visual Chart & Math) */}
       {/* ============================================================ */}
-      <div className="hidden lg:flex lg:w-[40%] xl:w-[38%] flex-col h-full min-h-0 overflow-y-auto no-scrollbar space-y-3.5 pr-1 flex-shrink-0">
-        {/* Studio Top Banner */}
-        <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800/90 shadow-md backdrop-blur-xl flex items-center justify-between">
+      <div className="hidden lg:flex lg:w-[42%] xl:w-[40%] flex-col h-full min-h-0 overflow-y-auto no-scrollbar space-y-3.5 pr-1.5 flex-shrink-0">
+        {/* Studio Top Banner with Export Shortcut */}
+        <div className="p-3 rounded-2xl bg-slate-900/80 border border-slate-800/90 shadow-md backdrop-blur-xl flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-xs font-bold text-amber-300 uppercase tracking-wider font-serif">
-              Studio Kundali • {profile.name}
+              Studio Workstation • {profile.name}
             </span>
           </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsExportOpen(true)}
+              className="text-[11px] text-amber-300 hover:text-amber-200 bg-amber-500/10 hover:bg-amber-500/20 px-2 py-0.5 rounded-lg border border-amber-500/30 flex items-center gap-1 transition"
+              title="Export as PDF or Image"
+            >
+              <Download className="w-3 h-3 text-amber-400" />
+              <span>Export</span>
+            </button>
+            <button
+              onClick={() => setActiveView('charts')}
+              className="text-[11px] text-purple-300 hover:text-purple-200 hover:underline flex items-center gap-1 font-medium transition"
+            >
+              <span>Full View</span>
+              <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+
+        {/* Dual Chart Engine Switcher: Vedic (D1/D9) vs Western Wheel (360°) */}
+        <div className="grid grid-cols-2 p-1 bg-slate-950/90 rounded-xl border border-slate-800 text-[11px]">
           <button
-            onClick={() => setActiveView('charts')}
-            className="text-[11px] text-purple-300 hover:text-purple-200 hover:underline flex items-center gap-1 font-medium transition"
+            type="button"
+            onClick={() => setLeftChartSystem('vedic')}
+            className={`py-1.5 rounded-lg font-medium transition flex items-center justify-center gap-1.5 ${
+              leftChartSystem === 'vedic'
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm font-semibold'
+                : 'text-slate-400 hover:text-white'
+            }`}
           >
-            <span>Full Chart</span>
-            <ArrowRight className="w-3 h-3" />
+            <Compass className="w-3.5 h-3.5 text-amber-400" />
+            <span>Vedic Kundali</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setLeftChartSystem('western')}
+            className={`py-1.5 rounded-lg font-medium transition flex items-center justify-center gap-1.5 ${
+              leftChartSystem === 'western'
+                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm font-semibold'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+            <span>Western Wheel</span>
           </button>
         </div>
 
-        {/* Visual South Indian Chart Diagram */}
-        {sidereal ? (
-          <SouthIndianChart
-            planets={sidereal.planets}
-            lagna={sidereal.lagna}
-            nativeName={profile.name}
-            chartTitle="NATAL RASI (D1)"
-          />
+        {/* Visual Chart Diagram */}
+        {leftChartSystem === 'vedic' ? (
+          sidereal ? (
+            <VedicChart
+              siderealChart={sidereal}
+              nativeName={profile.name}
+              defaultMode="south"
+              defaultDivision="D1"
+            />
+          ) : (
+            <div className="p-8 text-center text-xs text-slate-400 bg-slate-900/40 rounded-2xl border border-slate-800">
+              Calculating Vedic Swiss Ephemeris chart...
+            </div>
+          )
         ) : (
-          <div className="p-8 text-center text-xs text-slate-400 bg-slate-900/40 rounded-2xl border border-slate-800">
-            Calculating Swiss Ephemeris chart...
-          </div>
+          astrologyData?.tropicalChart ? (
+            <WesternWheel
+              tropicalChart={astrologyData.tropicalChart}
+              nativeName={profile.name}
+            />
+          ) : (
+            <div className="p-8 text-center text-xs text-slate-400 bg-slate-900/40 rounded-2xl border border-slate-800">
+              Calculating Western Tropical chart...
+            </div>
+          )
         )}
 
         {/* Quick Astrological Triad (Asc, Moon, Sun) */}
@@ -170,7 +243,7 @@ export const OracleChat: React.FC = () => {
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                <span>Active Dasha Period</span>
+                <span>Active Vimshottari Timeline</span>
               </span>
               <span className="text-[10px] font-mono text-amber-300 font-semibold">
                 {currentDasha.percentagePassed}% elapsed
@@ -206,10 +279,82 @@ export const OracleChat: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* Detailed Nakshatra & Pada Placement Table */}
+        {sidereal && (
+          <div className="rounded-xl bg-slate-900/80 border border-slate-800 overflow-hidden shadow-lg">
+            <div className="px-3 py-2 bg-slate-900/95 border-b border-slate-800 flex items-center justify-between">
+              <span className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">
+                Nakshatra & Pada Coordinates
+              </span>
+              <span className="text-[10px] text-amber-300/80 font-mono">
+                Lahiri Ayanamsa
+              </span>
+            </div>
+            <div className="overflow-x-auto touch-pan-x">
+              <table className="w-full text-left text-[11px]">
+                <thead className="bg-slate-950/70 text-slate-400 uppercase tracking-wider border-b border-slate-800 text-[9px]">
+                  <tr>
+                    <th className="py-1.5 px-2.5">Point</th>
+                    <th className="py-1.5 px-2.5">Sign & Deg</th>
+                    <th className="py-1.5 px-2.5">Nakshatra (Pada)</th>
+                    <th className="py-1.5 px-2.5">Lord</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/50">
+                  {/* Lagna Row */}
+                  <tr id="planet-row-lagna" className="hover:bg-slate-800/40 transition">
+                    <td className="py-1.5 px-2.5 font-semibold text-amber-300 flex items-center gap-1">
+                      <span>✦</span>
+                      <span>Lagna</span>
+                    </td>
+                    <td className="py-1.5 px-2.5 text-slate-200 font-mono text-[10px]">
+                      {sidereal.lagna.sign} {sidereal.lagna.formattedDegree.split(' ')[1] || sidereal.lagna.formattedDegree}
+                    </td>
+                    <td className="py-1.5 px-2.5 text-slate-300">
+                      {sidereal.lagna.nakshatra} <span className="text-amber-400 font-medium">P{sidereal.lagna.pada}</span>
+                    </td>
+                    <td className="py-1.5 px-2.5 text-slate-400 text-[10px]">
+                      Ascendant
+                    </td>
+                  </tr>
+
+                  {/* Planet Rows */}
+                  {sidereal.planets.map((planet) => (
+                    <tr
+                      key={planet.name}
+                      id={`planet-row-${planet.name.toLowerCase()}`}
+                      className="hover:bg-slate-800/40 transition"
+                    >
+                      <td className="py-1.5 px-2.5 font-medium text-white flex items-center gap-1.5">
+                        <span className="text-amber-300 font-mono text-xs">
+                          {PLANET_SYMBOLS[planet.name] || '•'}
+                        </span>
+                        <span>{planet.name}</span>
+                        {planet.isRetrograde && (
+                          <span className="text-[9px] text-rose-400 font-bold">℞</span>
+                        )}
+                      </td>
+                      <td className="py-1.5 px-2.5 text-slate-300 font-mono text-[10px]">
+                        {planet.sign} {planet.formattedDegree.split(' ')[1] || planet.formattedDegree}
+                      </td>
+                      <td className="py-1.5 px-2.5 text-slate-300">
+                        {planet.nakshatra} <span className="text-amber-400 font-medium">P{planet.nakshatraPada}</span>
+                      </td>
+                      <td className="py-1.5 px-2.5 text-slate-400 text-[10px]">
+                        {planet.nakshatraLord}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ============================================================ */}
-      {/* RIGHT COLUMN (60% width on desktop, Full width on mobile)   */}
+      {/* RIGHT COLUMN (58% width on desktop, Full width on mobile)   */}
       {/* ============================================================ */}
       <div className="flex-1 min-h-0 flex flex-col h-full overflow-hidden">
         {/* Mobile-Only Segmented Switch: Chat vs Kundali Chart */}
@@ -243,13 +388,49 @@ export const OracleChat: React.FC = () => {
         {/* Mobile Chart Tab Content */}
         {mobileTab === 'chart' && (
           <div className="lg:hidden flex-1 min-h-0 overflow-y-auto no-scrollbar space-y-3 p-1">
-            {sidereal && (
-              <SouthIndianChart
-                planets={sidereal.planets}
-                lagna={sidereal.lagna}
-                nativeName={profile.name}
-              />
+            <div className="grid grid-cols-2 p-1 bg-slate-950/90 rounded-xl border border-slate-800 text-[11px]">
+              <button
+                type="button"
+                onClick={() => setLeftChartSystem('vedic')}
+                className={`py-1.5 rounded-lg font-medium transition ${
+                  leftChartSystem === 'vedic'
+                    ? 'bg-amber-500/20 text-amber-300 font-semibold'
+                    : 'text-slate-400'
+                }`}
+              >
+                Vedic Kundali
+              </button>
+              <button
+                type="button"
+                onClick={() => setLeftChartSystem('western')}
+                className={`py-1.5 rounded-lg font-medium transition ${
+                  leftChartSystem === 'western'
+                    ? 'bg-purple-500/20 text-purple-300 font-semibold'
+                    : 'text-slate-400'
+                }`}
+              >
+                Western Wheel
+              </button>
+            </div>
+
+            {leftChartSystem === 'vedic' ? (
+              sidereal && (
+                <VedicChart
+                  siderealChart={sidereal}
+                  nativeName={profile.name}
+                  defaultMode="south"
+                  defaultDivision="D1"
+                />
+              )
+            ) : (
+              astrologyData?.tropicalChart && (
+                <WesternWheel
+                  tropicalChart={astrologyData.tropicalChart}
+                  nativeName={profile.name}
+                />
+              )
             )}
+
             {currentDasha && (
               <div className="p-3.5 rounded-xl bg-purple-950/30 border border-purple-500/25">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">
@@ -260,6 +441,7 @@ export const OracleChat: React.FC = () => {
                 </p>
               </div>
             )}
+
             <button
               onClick={() => setActiveView('charts')}
               className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold text-center block transition"

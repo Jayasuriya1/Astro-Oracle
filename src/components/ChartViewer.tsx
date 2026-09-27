@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Compass, RefreshCw, Layers, ArrowRightLeft } from 'lucide-react';
+import { Compass, RefreshCw, Layers, ArrowRightLeft, HeartHandshake } from 'lucide-react';
 import { useAstrology } from '../context/AstrologyContext';
-import { SouthIndianChart } from './SouthIndianChart';
+import { VedicChart } from './VedicChart';
+import { WesternWheel } from './WesternWheel';
 import { VimshottariDashaTable } from './VimshottariDashaTable';
+import { PanchangamViewer } from './PanchangamViewer';
+import { PoruthamViewer } from './PoruthamViewer';
 
 const PLANET_SYMBOLS: Record<string, string> = {
   Sun: '☉',
@@ -35,11 +38,11 @@ const SIGN_COLORS: Record<string, string> = {
   Pisces: 'text-blue-400 bg-blue-500/10 border-blue-500/20'
 };
 
-export const ChartViewer: React.FC<{ defaultSubTab?: 'western' | 'vedic' | 'transits' }> = ({
+export const ChartViewer: React.FC<{ defaultSubTab?: 'western' | 'vedic' | 'transits' | 'porutham' }> = ({
   defaultSubTab = 'vedic'
 }) => {
   const { astrologyData, isCalculating, recalculate, profile } = useAstrology();
-  const [subTab, setSubTab] = useState<'vedic' | 'western' | 'transits'>(defaultSubTab);
+  const [subTab, setSubTab] = useState<'vedic' | 'western' | 'transits' | 'porutham'>(defaultSubTab);
 
   if (isCalculating || !astrologyData) {
     return (
@@ -68,10 +71,10 @@ export const ChartViewer: React.FC<{ defaultSubTab?: 'western' | 'vedic' | 'tran
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
           {/* Responsive Segmented Pills */}
-          <div className="w-full sm:w-auto grid grid-cols-3 sm:flex p-1 bg-slate-950 rounded-xl border border-slate-800 text-center">
+          <div className="w-full sm:w-auto grid grid-cols-2 sm:grid-cols-4 p-1 bg-slate-950 rounded-xl border border-slate-800 text-center gap-1">
             <button
               onClick={() => setSubTab('vedic')}
-              className={`px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition ${
                 subTab === 'vedic'
                   ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
                   : 'text-slate-400 hover:text-white'
@@ -82,25 +85,36 @@ export const ChartViewer: React.FC<{ defaultSubTab?: 'western' | 'vedic' | 'tran
             </button>
             <button
               onClick={() => setSubTab('western')}
-              className={`px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition ${
                 subTab === 'western'
                   ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
               <span>Western</span>
-              <span className="hidden sm:inline"> (Trop)</span>
+              <span className="hidden sm:inline"> (Wheel)</span>
             </button>
             <button
               onClick={() => setSubTab('transits')}
-              className={`px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition ${
                 subTab === 'transits'
                   ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              <span>Transits</span>
-              <span className="hidden sm:inline"> (Live)</span>
+              <span>Panchangam</span>
+              <span className="hidden sm:inline"> & Live</span>
+            </button>
+            <button
+              onClick={() => setSubTab('porutham')}
+              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                subTab === 'porutham'
+                  ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <HeartHandshake className="w-3 h-3 inline mr-1" />
+              <span>Porutham</span>
             </button>
           </div>
 
@@ -121,20 +135,20 @@ export const ChartViewer: React.FC<{ defaultSubTab?: 'western' | 'vedic' | 'tran
           animate={{ opacity: 1, y: 0 }}
           className="space-y-4 sm:space-y-6"
         >
-          {/* Visual South Indian Chart Diagram & Key Milestones */}
+          {/* Visual Vedic Kundali (South/North & D1/D9) & Key Milestones */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
             {/* Visual SVG Chart (Left Column) */}
-            <div className="lg:col-span-5 flex flex-col items-center">
-              <SouthIndianChart
-                planets={siderealChart.planets}
-                lagna={siderealChart.lagna}
+            <div className="lg:col-span-6 flex flex-col items-center">
+              <VedicChart
+                siderealChart={siderealChart}
                 nativeName={profile.name}
-                chartTitle="RASI (D1)"
+                defaultMode="south"
+                defaultDivision="D1"
               />
             </div>
 
             {/* Key Vedic Milestones & Snapshot (Right Column) */}
-            <div className="lg:col-span-7 space-y-3.5">
+            <div className="lg:col-span-6 space-y-3.5">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="p-3.5 sm:p-4 rounded-xl bg-slate-900/80 border border-slate-800">
                   <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400">Lagna (Ascendant)</span>
@@ -289,22 +303,35 @@ export const ChartViewer: React.FC<{ defaultSubTab?: 'western' | 'vedic' | 'tran
           animate={{ opacity: 1, y: 0 }}
           className="space-y-4 sm:space-y-6"
         >
-          {/* Key Western Points */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <div className="p-3.5 sm:p-4 rounded-xl bg-slate-900/80 border border-slate-800">
-              <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400">Ascendant (Rising Sign)</span>
-              <p className="text-base sm:text-lg font-bold text-amber-300 font-serif mt-0.5">
-                {tropicalChart.ascendant.formattedDegree}
-              </p>
-              <p className="text-[11px] text-slate-400">Placidus 1st House Cusp</p>
+          {/* Visual Western Wheel & Key Points */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+            <div className="lg:col-span-6 flex flex-col items-center">
+              <WesternWheel tropicalChart={tropicalChart} nativeName={profile.name} />
             </div>
 
-            <div className="p-3.5 sm:p-4 rounded-xl bg-slate-900/80 border border-slate-800">
-              <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400">Midheaven (Medium Coeli)</span>
-              <p className="text-base sm:text-lg font-bold text-indigo-300 font-serif mt-0.5">
-                {tropicalChart.midheaven.formattedDegree}
-              </p>
-              <p className="text-[11px] text-slate-400">Placidus 10th House Cusp</p>
+            <div className="lg:col-span-6 space-y-3.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+                  <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400">Ascendant (Rising Sign)</span>
+                  <p className="text-base sm:text-lg font-bold text-amber-300 font-serif mt-0.5">
+                    {tropicalChart.ascendant.formattedDegree}
+                  </p>
+                  <p className="text-[11px] text-slate-400">Placidus 1st House Cusp</p>
+                </div>
+
+                <div className="p-3.5 sm:p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+                  <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400">Midheaven (Medium Coeli)</span>
+                  <p className="text-base sm:text-lg font-bold text-indigo-300 font-serif mt-0.5">
+                    {tropicalChart.midheaven.formattedDegree}
+                  </p>
+                  <p className="text-[11px] text-slate-400">Placidus 10th House Cusp</p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-purple-950/20 border border-purple-800/30 text-xs text-purple-200 leading-relaxed">
+                Western Placidus calculates the 360° circular wheel dividing the sky by quadrant arcs.
+                The aspect geometric lines (Trines, Squares, Oppositions, Sextiles) illustrate interpersonal psychology and harmonic resonance.
+              </div>
             </div>
           </div>
 
@@ -401,13 +428,18 @@ export const ChartViewer: React.FC<{ defaultSubTab?: 'western' | 'vedic' | 'tran
         </motion.div>
       )}
 
-      {/* LIVE TRANSITS VIEW */}
+      {/* LIVE TRANSITS & PANCHANGAM VIEW */}
       {subTab === 'transits' && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           className="space-y-4 sm:space-y-6"
         >
+          {/* Daily Live Panchangam (Tithi, Nakshatra, Hora, Rahu Kalam) */}
+          {astrologyData.panchangam && (
+            <PanchangamViewer panchangam={astrologyData.panchangam} />
+          )}
+
           <div className="p-3.5 sm:p-4 rounded-xl bg-cyan-950/20 border border-cyan-800/40 text-xs text-cyan-200">
             Current live planetary positions computed at {new Date(transits.sidereal.calculatedAt).toLocaleString()}.
             The Oracle cross-checks these live transits with your natal houses to predict timing of events!
@@ -468,6 +500,17 @@ export const ChartViewer: React.FC<{ defaultSubTab?: 'western' | 'vedic' | 'tran
               </div>
             </div>
           </div>
+        </motion.div>
+      )}
+
+      {/* COMPATIBILITY (10 PORUTHAM) VIEW */}
+      {subTab === 'porutham' && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-4 sm:space-y-6"
+        >
+          <PoruthamViewer />
         </motion.div>
       )}
     </div>

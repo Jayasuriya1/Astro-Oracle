@@ -1,5 +1,4 @@
-import React from 'react';
-import { Sparkles, Compass, Radio } from 'lucide-react';
+import { Sparkles, Compass, Radio, Download } from 'lucide-react';
 import { useAstrology } from '../context/AstrologyContext';
 import { CelestialEmblem } from './CelestialEmblem';
 import { ProfileSwitcher } from './ProfileSwitcher';
@@ -10,7 +9,9 @@ export const Navbar: React.FC = () => {
     activeView,
     setActiveView,
     setIsSettingsOpen,
-    setSettingsModalMode
+    setSettingsModalMode,
+    setIsExportOpen,
+    scrollToPlanet
   } = useAstrology();
 
   // Extract quick celestial signs
@@ -93,20 +94,52 @@ export const Navbar: React.FC = () => {
 
           {/* Right: Celestial Signs & Family Profile Switcher */}
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-            {/* Subtle Celestial Signs (Large Screens) */}
+            {/* Celestial Signs Clickable Shortcuts (Large Screens) */}
             {tropicalSun && vedicMoon && (
-              <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/60 border border-slate-800/80 text-[11px] text-slate-300">
-                <span className="text-amber-300 font-medium">☉ {tropicalSun.sign}</span>
+              <div className="hidden xl:flex items-center gap-1.5 p-1 rounded-xl bg-slate-900/70 border border-slate-800/80 text-[11px] text-slate-300">
+                <button
+                  type="button"
+                  onClick={() => scrollToPlanet('Sun')}
+                  title="Scroll to Sun placements"
+                  className="px-2 py-0.5 rounded-lg text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 font-medium transition flex items-center gap-1"
+                >
+                  <span>☉ {tropicalSun.sign}</span>
+                </button>
                 <span className="text-slate-700">•</span>
-                <span className="text-cyan-300 font-medium">☽ {vedicMoon.sign}</span>
+                <button
+                  type="button"
+                  onClick={() => scrollToPlanet('Moon')}
+                  title="Scroll to Moon placements"
+                  className="px-2 py-0.5 rounded-lg text-cyan-300 hover:text-cyan-200 hover:bg-cyan-500/10 font-medium transition flex items-center gap-1"
+                >
+                  <span>☽ {vedicMoon.sign}</span>
+                </button>
                 {vedicLagna && (
                   <>
                     <span className="text-slate-700">•</span>
-                    <span className="text-purple-300 font-medium">Asc {vedicLagna.sign}</span>
+                    <button
+                      type="button"
+                      onClick={() => scrollToPlanet('Lagna')}
+                      title="Scroll to Ascendant placements"
+                      className="px-2 py-0.5 rounded-lg text-purple-300 hover:text-purple-200 hover:bg-purple-500/10 font-medium transition flex items-center gap-1"
+                    >
+                      <span>Asc {vedicLagna.sign}</span>
+                    </button>
                   </>
                 )}
               </div>
             )}
+
+            {/* Export Chart & AI Reading Button */}
+            <button
+              type="button"
+              onClick={() => setIsExportOpen(true)}
+              className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/40 text-slate-300 hover:text-white text-xs font-medium transition flex items-center gap-1.5 shadow-sm"
+              title="Export Chart as PDF or Image"
+            >
+              <Download className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden sm:inline">Export</span>
+            </button>
 
             {/* Multi-User Family Profile Switcher */}
             <ProfileSwitcher onOpenAddProfile={handleOpenAddProfile} />

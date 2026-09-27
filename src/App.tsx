@@ -5,10 +5,11 @@ import { Navbar } from './components/Navbar';
 import { OracleChat } from './components/OracleChat';
 import { ChartViewer } from './components/ChartViewer';
 import { SettingsModal } from './components/SettingsModal';
+import { ExportModal } from './components/ExportModal';
 import { BackgroundStars } from './components/BackgroundStars';
 
 const MainContent: React.FC = () => {
-  const { activeView } = useAstrology();
+  const { activeView, isExportOpen, setIsExportOpen } = useAstrology();
 
   return (
     <div className="relative z-10 flex flex-col h-screen h-[100dvh] overflow-hidden">
@@ -58,6 +59,7 @@ const MainContent: React.FC = () => {
       </main>
 
       <SettingsModal />
+      <ExportModal isOpen={isExportOpen} onClose={() => setIsExportOpen(false)} />
     </div>
   );
 };
