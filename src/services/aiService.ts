@@ -103,7 +103,7 @@ class AIService {
 
   // Test API key validity
   async testApiKey(key: string): Promise<boolean> {
-    const testModels = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-3.8-flash'];
+    const testModels = ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.5-flash'];
     let lastError: any = null;
 
     for (const model of testModels) {
@@ -118,7 +118,7 @@ class AIService {
         lastError = e;
         const msg = (e?.message || '').toLowerCase();
         if (msg.includes('api_key_invalid') || msg.includes('api key not valid') || msg.includes('permission_denied')) {
-          throw new Error('Invalid Gemini API key. Please check your key.');
+          throw new Error('Invalid Gemini API key. Please check your key in Settings.');
         }
         // Try next candidate
         continue;
@@ -127,7 +127,7 @@ class AIService {
     throw new Error(lastError?.message || 'Invalid Gemini API key or network error');
   }
 
-  // Stream chat response with sliding window and automatic fallback across valid Gemini endpoints
+  // Stream chat response with sliding window and automatic fallback across valid Gemini 3 endpoints
   async streamChat(
     history: ChatMessage[],
     userMessage: string,
@@ -164,56 +164,71 @@ class AIService {
       parts: [{ text: userMessage }]
     });
 
-    // Validated Gemini model candidate fallback chain
+    // Validated Gemini 3 family endpoints in order of preference
     const modelsToTry = [
-      'gemini-2.0-flash',
-      'gemini-1.5-flash',
       'gemini-3.8-flash',
-      'gemini-1.5-pro'
+      'gemini-3.7-flash',
+      'gemini-3.5-flash',
+      'gemini-3.5-flash-lite'
     ];
     let lastError: any = null;
 
     for (const model of modelsToTry) {
-      let fullResponse = '';
-      try {
-        const stream = await client.models.generateContentStream({
-          model,
-          contents,
-          config: {
-            systemInstruction,
-            temperature: 0.7,
-            topP: 0.95
+      // Allow up to 2 attempts per model if 503 high demand occurs
+      for (let attempt = 0; attempt < 2; attempt++) {
+        let fullResponse = '';
+        try {
+          const stream = await client.models.generateContentStream({
+            model,
+            contents,
+            config: {
+              systemInstruction,
+              temperature: 0.7,
+              topP: 0.95
+            }
+          });
+
+          for await (const chunk of stream) {
+            const text = chunk.text;
+            if (text) {
+              fullResponse += text;
+              onChunk(fullResponse);
+            }
           }
-        });
 
-        for await (const chunk of stream) {
-          const text = chunk.text;
-          if (text) {
-            fullResponse += text;
-            onChunk(fullResponse);
+          if (fullResponse) {
+            return fullResponse;
           }
-        }
+        } catch (err: any) {
+          lastError = err;
+          const msg = (err?.message || '').toLowerCase();
+          const isAuthError =
+            msg.includes('api_key_invalid') ||
+            msg.includes('api key not valid') ||
+            msg.includes('permission_denied') ||
+            msg.includes('unauthenticated');
 
-        if (fullResponse) {
-          return fullResponse;
-        }
-      } catch (err: any) {
-        lastError = err;
-        const msg = (err?.message || '').toLowerCase();
-        const isAuthError =
-          msg.includes('api_key_invalid') ||
-          msg.includes('api key not valid') ||
-          msg.includes('permission_denied') ||
-          msg.includes('unauthenticated');
+          if (isAuthError) {
+            throw new Error('Invalid Gemini API Key. Please update your key in Settings.');
+          }
 
-        if (isAuthError) {
-          // If the key itself is rejected by Google, fail immediately with clear instructions
-          throw new Error('Invalid Gemini API Key. Please update your key in Settings.');
-        }
+          const is503HighDemand =
+            msg.includes('503') ||
+            msg.includes('high demand') ||
+            msg.includes('unavailable') ||
+            msg.includes('overloaded');
 
-        // For any model-specific issue (404 Not Found, 503 High Demand, 429 Rate Limit, 500, etc.), fall back to the next model
-        console.warn(`Model ${model} failed with error (${err.message}). Falling back to next candidate model...`);
-        continue;
+          // If 503 on first attempt, wait 1.2s and retry once
+          if (is503HighDemand && attempt === 0) {
+            console.warn(`Model ${model} experienced temporary 503 high demand. Retrying in 1.2s...`);
+            await new Promise((resolve) => setTimeout(resolve, 1200));
+            continue;
+          }
+
+          // If 404 or repeated 503, move to the next model in the candidate chain
+          console.warn(`Model ${model} attempt ${attempt + 1} failed (${err.message}). Trying next candidate model...`);
+          break; // Break inner retry loop to try next model in modelsToTry
+        }
       }
     }
 
