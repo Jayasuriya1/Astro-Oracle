@@ -140,9 +140,12 @@ export const NorthIndianChart: React.FC<NorthIndianChartProps> = ({
 }) => {
   const [hoveredHouse, setHoveredHouse] = useState<number | null>(null);
 
+  const safeLagna = lagna || { sign: 'Aries', degree: 0, formattedDegree: "0°00' Aries" };
+  const safePlanets = planets || [];
+
   // Find Lagna sign index (0 to 11)
   const lagnaSignIndex = ZODIAC_NAMES.findIndex(
-    (s) => s.toLowerCase() === lagna.sign.toLowerCase()
+    (s) => s.toLowerCase() === (safeLagna.sign || 'Aries').toLowerCase()
   );
   const baseIndex = lagnaSignIndex >= 0 ? lagnaSignIndex : 0;
 
@@ -179,7 +182,7 @@ export const NorthIndianChart: React.FC<NorthIndianChartProps> = ({
             const isHovered = hoveredHouse === houseNum;
 
             // Planets residing in this house
-            const housePlanets = planets.filter((p) => p.house === houseNum || p.sign.toLowerCase() === signName.toLowerCase());
+            const housePlanets = safePlanets.filter((p) => p.house === houseNum || (p.sign && p.sign.toLowerCase() === signName.toLowerCase()));
 
             return (
               <g
@@ -273,7 +276,7 @@ export const NorthIndianChart: React.FC<NorthIndianChartProps> = ({
           {(() => {
             const signIdx = (baseIndex + (hoveredHouse - 1)) % 12;
             const signName = ZODIAC_NAMES[signIdx];
-            const inHouse = planets.filter((p) => p.house === hoveredHouse);
+            const inHouse = safePlanets.filter((p) => p.house === hoveredHouse);
             return (
               <p>
                 <span className="text-amber-300 font-semibold">House {hoveredHouse}</span>:

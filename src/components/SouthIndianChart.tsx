@@ -86,14 +86,17 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
   const viewBoxSize = 440;
   const cellSize = viewBoxSize / 4; // 110px per cell
 
+  const safeLagna = lagna || { sign: 'Aries', degree: 0, formattedDegree: "0°00' Aries" };
+  const safePlanets = planets || [];
+
   // Find Lagna sign index
   const lagnaBox = SOUTH_INDIAN_BOXES.find(
-    (b) => b.sign.toLowerCase() === lagna.sign.toLowerCase()
+    (b) => b.sign.toLowerCase() === (safeLagna.sign || 'Aries').toLowerCase()
   );
   const lagnaSignIndex = lagnaBox ? lagnaBox.signIndex : 0;
 
   // Moon details
-  const moon = planets.find((p) => p.name === 'Moon');
+  const moon = safePlanets.find((p) => p.name === 'Moon');
 
   return (
     <div className={`relative flex flex-col items-center select-none ${className}`}>
