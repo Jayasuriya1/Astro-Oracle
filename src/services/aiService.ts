@@ -103,20 +103,31 @@ class AIService {
 
   // Test API key validity
   async testApiKey(key: string): Promise<boolean> {
-    try {
-      const testClient = new GoogleGenAI({ apiKey: key });
-      const response = await testClient.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: 'Ping: respond with "OK"'
-      });
-      return !!response.text;
-    } catch (e: any) {
-      console.error('API key test failed:', e);
-      throw new Error(e?.message || 'Invalid Gemini API key or network error');
+    const testModels = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-3.8-flash'];
+    let lastError: any = null;
+
+    for (const model of testModels) {
+      try {
+        const testClient = new GoogleGenAI({ apiKey: key });
+        const response = await testClient.models.generateContent({
+          model,
+          contents: 'Ping: respond with "OK"'
+        });
+        if (response.text) return true;
+      } catch (e: any) {
+        lastError = e;
+        const msg = (e?.message || '').toLowerCase();
+        if (msg.includes('api_key_invalid') || msg.includes('api key not valid') || msg.includes('permission_denied')) {
+          throw new Error('Invalid Gemini API key. Please check your key.');
+        }
+        // Try next candidate
+        continue;
+      }
     }
+    throw new Error(lastError?.message || 'Invalid Gemini API key or network error');
   }
 
-  // Stream chat response with sliding window and automatic fallback for 503 high demand
+  // Stream chat response with sliding window and automatic fallback across valid Gemini endpoints
   async streamChat(
     history: ChatMessage[],
     userMessage: string,
@@ -127,7 +138,7 @@ class AIService {
     const client = await this.getClient();
     const systemInstruction = buildSystemInstruction(astroData, profile);
 
-    // Keep payload fast and light: use sliding window of the last 6-8 messages
+    // Keep payload fast and light: use sliding window of the last 8 messages
     const recentHistory = history.slice(-8);
     const contents: Array<{ role: 'user' | 'model'; parts: Array<{ text: string }> }> = [];
 
@@ -153,8 +164,13 @@ class AIService {
       parts: [{ text: userMessage }]
     });
 
-    // Model candidate fallback chain to avoid 503 "high demand" errors
-    const modelsToTry = ['gemini-2.5-flash', 'gemini-3.8-flash', 'gemini-2.0-flash'];
+    // Validated Gemini model candidate fallback chain
+    const modelsToTry = [
+      'gemini-2.0-flash',
+      'gemini-1.5-flash',
+      'gemini-3.8-flash',
+      'gemini-1.5-pro'
+    ];
     let lastError: any = null;
 
     for (const model of modelsToTry) {
@@ -184,21 +200,20 @@ class AIService {
       } catch (err: any) {
         lastError = err;
         const msg = (err?.message || '').toLowerCase();
-        const isTemporaryCapacityIssue =
-          msg.includes('503') ||
-          msg.includes('high demand') ||
-          msg.includes('unavailable') ||
-          msg.includes('overloaded') ||
-          msg.includes('rate limit') ||
-          msg.includes('429');
+        const isAuthError =
+          msg.includes('api_key_invalid') ||
+          msg.includes('api key not valid') ||
+          msg.includes('permission_denied') ||
+          msg.includes('unauthenticated');
 
-        if (isTemporaryCapacityIssue) {
-          console.warn(`Model ${model} encountered capacity spike (${err.message}). Trying fallback model...`);
-          continue;
+        if (isAuthError) {
+          // If the key itself is rejected by Google, fail immediately with clear instructions
+          throw new Error('Invalid Gemini API Key. Please update your key in Settings.');
         }
 
-        // If it's an auth error (e.g. invalid key), fail immediately
-        throw err;
+        // For any model-specific issue (404 Not Found, 503 High Demand, 429 Rate Limit, 500, etc.), fall back to the next model
+        console.warn(`Model ${model} failed with error (${err.message}). Falling back to next candidate model...`);
+        continue;
       }
     }
 
