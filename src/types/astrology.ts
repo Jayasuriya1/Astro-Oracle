@@ -4,13 +4,29 @@ export interface Coordinates {
   placeName?: string;
 }
 
+export type FamilyRelationship = 
+  | 'Self' 
+  | 'Spouse' 
+  | 'Father' 
+  | 'Mother' 
+  | 'Child' 
+  | 'Sibling' 
+  | 'Partner' 
+  | 'Friend' 
+  | 'Other';
+
 export interface UserProfile {
+  id: string; // Unique profile identifier
   name: string;
+  relationship: FamilyRelationship;
+  gender?: 'Male' | 'Female' | 'Other';
   birthDate: string; // YYYY-MM-DD
   birthTime: string; // HH:mm (24hr)
   birthCoordinates: Coordinates;
   currentCity: string;
   currentState: string;
+  color?: string; // Avatar accent color
+  createdAt?: number;
 }
 
 export interface PlanetPosition {
@@ -91,6 +107,7 @@ export interface TransitData {
 }
 
 export interface CalculatedAstrologyData {
+  profileId: string;
   tropicalChart: WesternChart;
   siderealChart: VedicChart;
   transits: {
@@ -102,6 +119,7 @@ export interface CalculatedAstrologyData {
 
 export interface ChatMessage {
   id: string;
+  profileId?: string; // Strictly scoped to specific family profile
   sender: 'user' | 'assistant' | 'system';
   text: string;
   timestamp: number;

@@ -503,6 +503,7 @@ class AstrologyEngineService {
     });
 
     const calculatedData: CalculatedAstrologyData = {
+      profileId: profile.id,
       tropicalChart: westernChart,
       siderealChart: vedicChart,
       transits: {
@@ -522,8 +523,8 @@ class AstrologyEngineService {
       calculatedAt: nowIso
     };
 
-    // Store calculated JSON in IndexedDB
-    await storageService.saveAstrologyData(calculatedData);
+    // Store calculated JSON in IndexedDB strictly scoped to this profile
+    await storageService.saveAstrologyData(profile.id, calculatedData);
 
     return calculatedData;
   }
