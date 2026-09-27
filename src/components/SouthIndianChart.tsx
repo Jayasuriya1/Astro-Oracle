@@ -243,7 +243,7 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
               <g
                 key={box.sign}
                 transform={`translate(${x}, ${y})`}
-                className="cursor-pointer transition-all duration-150"
+                className="cursor-pointer"
                 onMouseEnter={() => setHoveredBox(box.signIndex)}
                 onMouseLeave={() => setHoveredBox(null)}
               >
@@ -381,28 +381,35 @@ export const SouthIndianChart: React.FC<SouthIndianChartProps> = ({
         </svg>
       </div>
 
-      {/* Interactive Tooltip Footer when hovering over a house */}
-      {hoveredBox !== null && (
-        <div className="mt-2 text-center text-xs text-slate-300 bg-slate-900/90 border border-slate-800 rounded-xl px-3 py-1.5 shadow-lg backdrop-blur-md">
-          {(() => {
+      {/* Stable, Fixed-Height Interactive Footer Bar (Prevents Layout Shifting & Lag) */}
+      <div className="w-full max-w-[440px] h-8 mt-2 flex items-center justify-center text-center text-xs px-3 rounded-xl border border-slate-800/80 bg-slate-950/60 backdrop-blur-md overflow-hidden transition-colors">
+        {hoveredBox !== null ? (
+          (() => {
             const box = SOUTH_INDIAN_BOXES.find((b) => b.signIndex === hoveredBox);
             if (!box) return null;
             const hNum = ((box.signIndex - lagnaSignIndex + 12) % 12) + 1;
-            const inSign = planets.filter((p) => p.sign.toLowerCase() === box.sign.toLowerCase());
+            const inSign = safePlanets.filter((p) => p.sign.toLowerCase() === box.sign.toLowerCase());
             return (
-              <p>
-                <span className="text-amber-300 font-semibold">{box.sign} ({box.sanskrit})</span>:
-                <span className="text-purple-300 font-medium ml-1">House {hNum} - {BHAVA_NAMES[hNum]}</span>
+              <p className="truncate text-slate-200">
+                <span className="text-amber-300 font-semibold">{box.sign} ({language === 'ta' ? box.tamil : box.sanskrit})</span>:
+                <span className="text-purple-300 font-medium ml-1">H{hNum} - {BHAVA_NAMES[hNum]}</span>
                 {inSign.length > 0 && (
-                  <span className="text-slate-400 ml-1.5">
-                    • {inSign.map((p) => `${p.name} (${Math.floor(p.signDegree)}°)`).join(', ')}
+                  <span className="text-slate-400 ml-1.5 font-mono">
+                    • {inSign.map((p) => `${p.name} ${Math.floor(p.signDegree)}°`).join(', ')}
                   </span>
                 )}
               </p>
             );
-          })()}
-        </div>
-      )}
+          })()
+        ) : (
+          <p className="text-[11px] text-slate-500 truncate flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-600 inline-block" />
+            {language === 'ta'
+              ? 'விவரங்களை காண ஏதேனும் வீட்டின் மேல் சுட்டியை நகர்த்தவும்'
+              : 'Hover over any house box to inspect bhava & planets'}
+          </p>
+        )}
+      </div>
     </div>
   );
 };

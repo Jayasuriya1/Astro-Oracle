@@ -187,7 +187,7 @@ export const NorthIndianChart: React.FC<NorthIndianChartProps> = ({
             return (
               <g
                 key={houseNum}
-                className="cursor-pointer transition-all duration-150"
+                className="cursor-pointer"
                 onMouseEnter={() => setHoveredHouse(houseNum)}
                 onMouseLeave={() => setHoveredHouse(null)}
               >
@@ -270,27 +270,32 @@ export const NorthIndianChart: React.FC<NorthIndianChartProps> = ({
         </svg>
       </div>
 
-      {/* Hover Info Footer */}
-      {hoveredHouse !== null && (
-        <div className="mt-2 text-center text-xs text-slate-300 bg-slate-900/90 border border-slate-800 rounded-xl px-3 py-1.5 shadow-lg backdrop-blur-md">
-          {(() => {
+      {/* Stable, Fixed-Height Interactive Footer Bar (Prevents Layout Shifting & Lag) */}
+      <div className="w-full max-w-[398px] h-8 mt-2 flex items-center justify-center text-center text-xs px-3 rounded-xl border border-slate-800/80 bg-slate-950/60 backdrop-blur-md overflow-hidden transition-colors">
+        {hoveredHouse !== null ? (
+          (() => {
             const signIdx = (baseIndex + (hoveredHouse - 1)) % 12;
             const signName = ZODIAC_NAMES[signIdx];
             const inHouse = safePlanets.filter((p) => p.house === hoveredHouse);
             return (
-              <p>
+              <p className="truncate text-slate-200">
                 <span className="text-amber-300 font-semibold">House {hoveredHouse}</span>:
-                <span className="text-purple-300 ml-1 font-medium">{signName} (Sign #{signIdx + 1})</span>
+                <span className="text-purple-300 ml-1 font-medium">{signName}</span>
                 {inHouse.length > 0 && (
-                  <span className="text-slate-400 ml-1.5">
+                  <span className="text-slate-400 ml-1.5 font-mono">
                     • {inHouse.map((p) => `${p.name} ${Math.floor(p.signDegree)}°`).join(', ')}
                   </span>
                 )}
               </p>
             );
-          })()}
-        </div>
-      )}
+          })()
+        ) : (
+          <p className="text-[11px] text-slate-500 truncate flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-600 inline-block" />
+            Hover over any diamond house to inspect placements
+          </p>
+        )}
+      </div>
     </div>
   );
 };

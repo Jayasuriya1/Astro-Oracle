@@ -57,41 +57,41 @@ export const Navbar: React.FC = () => {
           </div>
 
           {/* Center: Segmented Navigation Pill (Tablet / Laptop / Desktop) */}
-          <nav className="hidden md:flex items-center p-1 rounded-xl bg-slate-900/90 border border-slate-800 shadow-inner">
+          <nav className="hidden md:flex items-center p-1 rounded-xl bg-slate-900/90 border border-slate-800 shadow-inner flex-shrink-0">
             <button
               onClick={() => setActiveView('chat')}
-              className={`px-3.5 lg:px-4 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-1.5 lg:gap-2 ${
+              className={`px-3.5 lg:px-4 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-1.5 lg:gap-2 whitespace-nowrap flex-shrink-0 ${
                 activeView === 'chat'
                   ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/30'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              <span>{t.navChat}</span>
+              <Sparkles className="w-3.5 h-3.5 text-amber-300 flex-shrink-0" />
+              <span className="whitespace-nowrap">{t.navChat}</span>
             </button>
 
             <button
               onClick={() => setActiveView('charts')}
-              className={`px-3.5 lg:px-4 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-1.5 lg:gap-2 ${
+              className={`px-3.5 lg:px-4 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-1.5 lg:gap-2 whitespace-nowrap flex-shrink-0 ${
                 activeView === 'charts'
                   ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/30'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
               }`}
             >
-              <Compass className="w-3.5 h-3.5 text-cyan-400" />
-              <span>{t.navCharts}</span>
+              <Compass className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
+              <span className="whitespace-nowrap">{t.navCharts}</span>
             </button>
 
             <button
               onClick={() => setActiveView('transits')}
-              className={`px-3.5 lg:px-4 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-1.5 lg:gap-2 ${
+              className={`px-3.5 lg:px-4 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-1.5 lg:gap-2 whitespace-nowrap flex-shrink-0 ${
                 activeView === 'transits'
                   ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/30'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
               }`}
             >
-              <Radio className="w-3.5 h-3.5 text-rose-400" />
-              <span>{t.navTransits}</span>
+              <Radio className="w-3.5 h-3.5 text-rose-400 flex-shrink-0" />
+              <span className="whitespace-nowrap">{t.navTransits}</span>
             </button>
           </nav>
 
@@ -99,7 +99,7 @@ export const Navbar: React.FC = () => {
           <div className="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0">
             {/* Celestial Signs Clickable Shortcuts (Large Screens) */}
             {tropicalSun && vedicMoon && (
-              <div className="hidden xl:flex items-center gap-1.5 p-1 rounded-xl bg-slate-900/70 border border-slate-800/80 text-[11px] text-slate-300">
+              <div className="hidden 2xl:flex items-center gap-1.5 p-1 rounded-xl bg-slate-900/70 border border-slate-800/80 text-[11px] text-slate-300">
                 <button
                   type="button"
                   onClick={() => scrollToPlanet('Sun')}

@@ -284,22 +284,27 @@ export const WesternWheel: React.FC<WesternWheelProps> = ({
         </svg>
       </div>
 
-      {/* Hover Planet Tooltip */}
-      {hoveredPlanet && (
-        <div className="mt-2 text-center text-xs text-slate-300 bg-slate-900/90 border border-slate-800 rounded-xl px-3 py-1.5 shadow-lg backdrop-blur-md">
-          {(() => {
+      {/* Stable, Fixed-Height Interactive Footer Bar (Prevents Layout Shifting & Lag) */}
+      <div className="w-full max-w-[420px] h-8 mt-2 flex items-center justify-center text-center text-xs px-3 rounded-xl border border-slate-800/80 bg-slate-950/60 backdrop-blur-md overflow-hidden transition-colors">
+        {hoveredPlanet ? (
+          (() => {
             const pl = planets.find((p) => p.name === hoveredPlanet);
             if (!pl) return null;
             return (
-              <p>
+              <p className="truncate text-slate-200">
                 <span className="text-amber-300 font-semibold">{pl.name}</span> in{' '}
-                <span className="text-cyan-300">{pl.sign} ({pl.formattedDegree})</span> • House {pl.house}
-                {pl.isRetrograde && <span className="text-rose-400 font-bold ml-1">(Retrograde)</span>}
+                <span className="text-cyan-300 font-medium">{pl.sign} ({pl.formattedDegree})</span> • House {pl.house}
+                {pl.isRetrograde && <span className="text-rose-400 font-bold ml-1">(R)</span>}
               </p>
             );
-          })()}
-        </div>
-      )}
+          })()
+        ) : (
+          <p className="text-[11px] text-slate-500 truncate flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-600 inline-block" />
+            Hover over any planet node to inspect coordinates
+          </p>
+        )}
+      </div>
     </div>
   );
 };

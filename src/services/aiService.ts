@@ -14,41 +14,41 @@ export function buildSystemInstruction(
   // Compact Sidereal Lahiri Birth Placements
   const siderealLines = siderealChart?.planets
     ? [
-        `Lagna (Ascendant): ${siderealChart.lagna.sign} (${siderealChart.lagna.formattedDegree}), Nakshatra: ${siderealChart.lagna.nakshatra || ''} P${siderealChart.lagna.pada || 1}`,
-        ...siderealChart.planets.map(
-          (p) =>
-            `- ${p.name}: ${p.sign} (${p.formattedDegree}) in House ${p.house}, Nakshatra: ${p.nakshatra} P${p.nakshatraPada}, Lord: ${p.nakshatraLord}${p.isRetrograde ? ' (Retrograde)' : ''}`
-        )
-      ].join('\n')
+      `Lagna (Ascendant): ${siderealChart.lagna.sign} (${siderealChart.lagna.formattedDegree}), Nakshatra: ${siderealChart.lagna.nakshatra || ''} P${siderealChart.lagna.pada || 1}`,
+      ...siderealChart.planets.map(
+        (p) =>
+          `- ${p.name}: ${p.sign} (${p.formattedDegree}) in House ${p.house}, Nakshatra: ${p.nakshatra} P${p.nakshatraPada}, Lord: ${p.nakshatraLord}${p.isRetrograde ? ' (Retrograde)' : ''}`
+      )
+    ].join('\n')
     : '';
 
   // Compact Navamsha D9
   const navamshaLines = siderealChart?.navamshaChart
     ? `D9 Lagna: ${siderealChart.navamshaChart.lagna.sign}\nD9 Planets: ` +
-      siderealChart.navamshaChart.planets.map((p) => `${p.name}: ${p.sign}`).join(', ')
+    siderealChart.navamshaChart.planets.map((p) => `${p.name}: ${p.sign}`).join(', ')
     : '';
 
   // Compact Live Transits (Gochar)
   const transitLines = transits?.sidereal?.planets
     ? transits.sidereal.planets
-        .map((p) => `${p.name}: ${p.sign} (${p.formattedDegree})${p.isRetrograde ? ' (R)' : ''}`)
-        .join(', ')
+      .map((p) => `${p.name}: ${p.sign} (${p.formattedDegree})${p.isRetrograde ? ' (R)' : ''}`)
+      .join(', ')
     : '';
 
   // Compact Western (Tropical Placidus)
   const tropicalLines = tropicalChart
     ? [
-        `Ascendant: ${tropicalChart.ascendant?.formattedDegree || ''}, Midheaven: ${tropicalChart.midheaven?.formattedDegree || ''}`,
-        'Planets: ' +
-          tropicalChart.planets
-            .map((p) => `${p.name} in ${p.sign} (${p.formattedDegree}, H${p.house})`)
-            .join(', '),
-        'Key Aspects: ' +
-          tropicalChart.aspects
-            .slice(0, 10)
-            .map((a) => `${a.planet1} ${a.aspectType} ${a.planet2} (${a.orb.toFixed(1)}°)`)
-            .join(', ')
-      ].join('\n')
+      `Ascendant: ${tropicalChart.ascendant?.formattedDegree || ''}, Midheaven: ${tropicalChart.midheaven?.formattedDegree || ''}`,
+      'Planets: ' +
+      tropicalChart.planets
+        .map((p) => `${p.name} in ${p.sign} (${p.formattedDegree}, H${p.house})`)
+        .join(', '),
+      'Key Aspects: ' +
+      tropicalChart.aspects
+        .slice(0, 10)
+        .map((a) => `${a.planet1} ${a.aspectType} ${a.planet2} (${a.orb.toFixed(1)}°)`)
+        .join(', ')
+    ].join('\n')
     : '';
 
   const dashaInfo = currentDasha
@@ -74,8 +74,7 @@ HYBRID ANALYSIS RULES:
 1. IF THE USER ASKS ABOUT PERSONALITY OR EMOTIONS (e.g., "Why am I so angry?"): Use the WESTERN CHART. Focus on psychological archetypes and emotional validation.
 2. IF THE USER ASKS ABOUT TIMING OR CONCRETE EVENTS (e.g., "When will I get married?", "Will my business succeed?"): Use the VEDIC CHART. Analyze the relevant Sidereal houses (e.g., 7th for marriage, 10th for career) and their ruling planets.
 3. SYNTHESIS REQUIREMENT: Cross-check every conclusion with at least two factors (e.g., a House Lord + Current Transit).
-4. FLUID, CONVERSATIONAL & DIRECT RESPONSES:
-Answer the user's specific inquiry directly and naturally. Do NOT force a rigid, repeated template or standardized headings (e.g. do not repeat "Executive Summary", "Psychological Blueprint", etc. unless the user asks for a comprehensive full-chart analysis). Provide personalized, engaging, and clear insights tailored specifically to their question.
+
 
 REMEDY & PARIKARAM RULES:
 When the user asks for remedies, dosha pariharams, or bad-phase solutions, you MUST structure your answer into three practical tiers based on their CURRENT LOCATION (${profile.currentCity}, ${profile.currentState}):
