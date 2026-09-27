@@ -30,23 +30,28 @@ export const Navbar: React.FC = () => {
 
   return (
     <>
-      {/* Top Header - Ultra-Luxury Bespoke Styling */}
-      <header className="relative z-30 w-full border-b border-amber-500/15 bg-slate-950/85 backdrop-blur-2xl flex-shrink-0 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+      {/* Top Header - Ultra-Luxury Bespoke Styling with Mobile Optimization */}
+      <header className="relative z-30 w-full border-b border-amber-500/15 bg-slate-950/90 backdrop-blur-2xl flex-shrink-0 shadow-[0_4px_30px_rgba(0,0,0,0.5)] pt-[env(safe-area-inset-top,0px)]">
         {/* Subtle royal ambient glow line */}
         <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 h-16 sm:h-17 flex items-center justify-between gap-2 sm:gap-4">
+        <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 h-14 sm:h-17 flex items-center justify-between gap-1.5 sm:gap-4">
           {/* Left: Bespoke Luxury Brand Section with Fixed Alignment */}
-          <div className="flex items-center gap-3 sm:gap-3.5 flex-shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3.5 flex-shrink-0">
             {/* Handcrafted Sacred Geometry Astrolabe Emblem */}
-            <CelestialEmblem size={38} className="flex flex-shrink-0 drop-shadow-[0_0_12px_rgba(245,158,11,0.3)]" />
+            <div className="sm:hidden flex flex-shrink-0">
+              <CelestialEmblem size={30} className="drop-shadow-[0_0_10px_rgba(245,158,11,0.3)]" />
+            </div>
+            <div className="hidden sm:flex flex-shrink-0">
+              <CelestialEmblem size={38} className="drop-shadow-[0_0_12px_rgba(245,158,11,0.3)]" />
+            </div>
 
             <div className="flex flex-col justify-center">
-              <div className="flex items-center gap-2">
-                <span className="font-bold tracking-[0.12em] text-transparent bg-clip-text bg-gradient-to-r from-[#fff9db] via-[#fde047] to-[#d97706] text-base sm:text-lg lg:text-xl font-serif whitespace-nowrap drop-shadow-[0_2px_10px_rgba(245,158,11,0.25)] leading-tight">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="font-bold tracking-[0.08em] sm:tracking-[0.12em] text-transparent bg-clip-text bg-gradient-to-r from-[#fff9db] via-[#fde047] to-[#d97706] text-xs xs:text-sm sm:text-lg lg:text-xl font-serif whitespace-nowrap drop-shadow-[0_2px_10px_rgba(245,158,11,0.25)] leading-tight">
                   {t.appName}
                 </span>
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-gradient-to-r from-amber-500/20 to-purple-500/20 text-amber-300 border border-amber-400/40 tracking-wider shadow-sm leading-none flex-shrink-0">
+                <span className="inline-flex items-center px-1 sm:px-1.5 py-0.2 sm:py-0.5 rounded-full text-[8px] sm:text-[9px] font-bold bg-gradient-to-r from-amber-500/20 to-purple-500/20 text-amber-300 border border-amber-400/40 tracking-wider shadow-sm leading-none flex-shrink-0">
                   PRO
                 </span>
               </div>
@@ -137,24 +142,26 @@ export const Navbar: React.FC = () => {
             <button
               type="button"
               onClick={toggleLanguage}
-              className="px-2.5 py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/40 text-xs font-medium transition flex items-center gap-1.5 shadow-sm text-slate-200 hover:text-white"
+              className="px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/40 text-xs font-medium transition flex items-center gap-1 sm:gap-1.5 shadow-sm text-slate-200 hover:text-white flex-shrink-0"
               title={language === 'en' ? 'Switch to Tamil (தமிழ்)' : 'Switch to English'}
             >
               <Languages className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
-              <span className="font-semibold text-[11px] text-amber-300">
+              <span className="font-semibold text-[10px] sm:text-[11px] text-amber-300 whitespace-nowrap">
                 {language === 'en' ? 'தமிழ்' : 'English'}
               </span>
             </button>
 
-            {/* Export Chart & AI Reading Button */}
+            {/* Export Chart & AI Reading Button (Highly Responsive PDF download) */}
             <button
               type="button"
               onClick={() => setIsExportOpen(true)}
-              className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/40 text-slate-300 hover:text-white text-xs font-medium transition flex items-center gap-1.5 shadow-sm"
-              title="Export Chart as PDF or Image"
+              className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-purple-500/20 to-indigo-500/20 hover:from-amber-500/30 hover:to-purple-500/30 border border-amber-400/40 text-amber-200 hover:text-white text-xs font-semibold transition flex items-center gap-1 sm:gap-1.5 shadow-sm flex-shrink-0"
+              title="Export Chart & AI Reading as PDF"
             >
-              <Download className="w-3.5 h-3.5 text-amber-400" />
-              <span className="hidden sm:inline">{t.export}</span>
+              <Download className="w-3.5 h-3.5 text-amber-300 flex-shrink-0" />
+              <span className="text-[10px] sm:text-xs font-bold text-amber-300 tracking-wider">
+                PDF
+              </span>
             </button>
 
             {/* Multi-User Family Profile Switcher */}
@@ -164,7 +171,7 @@ export const Navbar: React.FC = () => {
       </header>
 
       {/* Mobile-Only Bottom Navigation Dock (Native App Feel) */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-2xl border-t border-slate-800/90 px-3 py-2 flex items-center justify-around shadow-[0_-5px_20px_rgba(0,0,0,0.6)]">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-2xl border-t border-slate-800/90 px-3 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] flex items-center justify-around shadow-[0_-5px_20px_rgba(0,0,0,0.6)]">
         <button
           onClick={() => setActiveView('chat')}
           className={`flex-1 py-1.5 px-2 flex flex-col items-center justify-center gap-1 rounded-xl transition ${
