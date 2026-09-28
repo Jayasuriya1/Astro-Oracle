@@ -366,6 +366,7 @@ export const AstrologyProvider: React.FC<{ children: ReactNode }> = ({ children 
     setError(null);
 
     try {
+      const chatSummary = await storageService.getChatSummary(profile.id);
       let accumulatedText = '';
       const finalReply = await aiService.streamChat(
         updatedHistory,
@@ -376,7 +377,8 @@ export const AstrologyProvider: React.FC<{ children: ReactNode }> = ({ children 
           accumulatedText = chunk;
           setStreamingMessage(chunk);
         },
-        language
+        language,
+        chatSummary
       );
 
       const assistantMsg: ChatMessage = {
@@ -390,6 +392,11 @@ export const AstrologyProvider: React.FC<{ children: ReactNode }> = ({ children 
       const finalHistory = [...updatedHistory, assistantMsg];
       setChatHistory(finalHistory);
       await storageService.saveChatHistory(profile.id, finalHistory);
+
+      // Silently generate updated conversation summary in the background using Lite / Gemma models
+      aiService.summarizeChatHistory(finalHistory, profile.id).catch((sErr) => {
+        console.warn('Silent background summarization notice:', sErr);
+      });
     } catch (err: any) {
       console.error('Error generating astrology reading:', err);
       setError(err?.message || 'An error occurred while connecting to the celestial intelligence.');

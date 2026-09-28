@@ -1,100 +1,71 @@
-import React from 'react';
+import React, { useId } from 'react';
 
 export const CelestialEmblem: React.FC<{ size?: number; className?: string }> = ({
-  size = 40,
+  size,
   className = ''
 }) => {
+  const uid = useId().replace(/:/g, '');
+  const bgId = `emblemBgGrad_${uid}`;
+  const goldId = `emblemGoldGrad_${uid}`;
+  const purpleId = `emblemPurpleGrad_${uid}`;
+  const glowId = `emblemGlowGrad_${uid}`;
+
   return (
     <div
-      className={`relative flex items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500/20 via-purple-900/30 to-slate-950 border border-amber-400/35 shadow-[0_0_25px_rgba(245,158,11,0.3)] ring-1 ring-amber-400/20 group cursor-pointer ${className}`}
-      style={{ width: size, height: size }}
+      className={`relative flex items-center justify-center rounded-2xl overflow-hidden group cursor-pointer transition-transform hover:scale-105 flex-shrink-0 ${className}`}
+      style={size ? { width: size, height: size } : undefined}
     >
-      {/* Outer ambient glow */}
-      <div className="absolute inset-0 rounded-2xl bg-amber-400/10 blur-md group-hover:bg-amber-400/25 transition-all duration-500 pointer-events-none" />
-
-      {/* Intricate Astrolabe Sacred Geometry SVG */}
       <svg
-        viewBox="0 0 100 100"
-        className="w-[82%] h-[82%] transform group-hover:rotate-45 transition-transform duration-700 ease-out"
-        fill="none"
+        viewBox="0 0 512 512"
+        className="w-full h-full transform group-hover:rotate-12 transition-transform duration-700 ease-out"
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          <linearGradient id="goldSheen" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#fff8db" />
-            <stop offset="35%" stopColor="#fbbf24" />
-            <stop offset="70%" stopColor="#d97706" />
-            <stop offset="100%" stopColor="#f59e0b" />
+          <radialGradient id={bgId} cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#1e1b4b" />
+            <stop offset="60%" stopColor="#090d16" />
+            <stop offset="100%" stopColor="#030712" />
+          </radialGradient>
+          <linearGradient id={goldId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#fef08a" />
+            <stop offset="50%" stopColor="#f59e0b" />
+            <stop offset="100%" stopColor="#b45309" />
           </linearGradient>
-          <linearGradient id="coreGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient id={purpleId} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#c084fc" />
-            <stop offset="100%" stopColor="#6366f1" />
+            <stop offset="100%" stopColor="#6d28d9" />
           </linearGradient>
+          <radialGradient id={glowId} cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#9333ea" stopOpacity="0" />
+          </radialGradient>
         </defs>
 
-        {/* Outer Zodiac / Ephemeris Ring with Celestial Degree Ticks */}
-        <circle
-          cx="50"
-          cy="50"
-          r="45"
-          stroke="url(#goldSheen)"
-          strokeWidth="1.2"
-          strokeDasharray="2 3"
-          className="opacity-80"
-        />
-        <circle
-          cx="50"
-          cy="50"
-          r="41"
-          stroke="url(#goldSheen)"
-          strokeWidth="0.8"
-          className="opacity-60"
-        />
+        {/* Background Base */}
+        <rect width="512" height="512" rx="110" fill={`url(#${bgId})`} />
+        <rect width="504" height="504" x="4" y="4" rx="106" fill="none" stroke={`url(#${goldId})`} strokeWidth="4" strokeOpacity="0.4" />
 
-        {/* Intersecting Elliptical Orbits */}
-        <ellipse
-          cx="50"
-          cy="50"
-          rx="38"
-          ry="15"
-          stroke="url(#goldSheen)"
-          strokeWidth="1"
-          transform="rotate(30 50 50)"
-          className="opacity-70"
-        />
-        <ellipse
-          cx="50"
-          cy="50"
-          rx="38"
-          ry="15"
-          stroke="url(#goldSheen)"
-          strokeWidth="1"
-          transform="rotate(-30 50 50)"
-          className="opacity-70"
-        />
+        {/* Outer Glow Circle */}
+        <circle cx="256" cy="256" r="210" fill={`url(#${glowId})`} />
 
-        {/* 8-Point Octagram Golden Star of Celestial Wisdom */}
-        <polygon
-          points="50,14 53,38 77,41 57,53 66,76 50,62 34,76 43,53 23,41 47,38"
-          fill="url(#goldSheen)"
-          className="opacity-95 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]"
-        />
+        {/* Celestial Zodiac Ring */}
+        <circle cx="256" cy="256" r="185" fill="none" stroke={`url(#${goldId})`} strokeWidth="4" strokeDasharray="8 6" />
+        <circle cx="256" cy="256" r="160" fill="none" stroke="#6d28d9" strokeWidth="2.5" strokeOpacity="0.8" />
 
-        {/* Glowing Sacred Center Core */}
-        <circle
-          cx="50"
-          cy="50"
-          r="7"
-          fill="url(#coreGlow)"
-          className="animate-pulse shadow-lg"
-        />
-        <circle
-          cx="50"
-          cy="50"
-          r="3"
-          fill="#ffffff"
-          className="shadow-sm"
-        />
+        {/* 8-Pointed Celestial Star Rays */}
+        <g stroke={`url(#${goldId})`} strokeWidth="5" strokeLinecap="round">
+          <line x1="256" y1="70" x2="256" y2="442" />
+          <line x1="70" y1="256" x2="442" y2="256" />
+          <line x1="125" y1="125" x2="387" y2="387" strokeWidth="3.5" strokeOpacity="0.7" />
+          <line x1="387" y1="125" x2="125" y2="387" strokeWidth="3.5" strokeOpacity="0.7" />
+        </g>
+
+        {/* Mystic Crescent Moon */}
+        <path d="M 275 140 A 115 115 0 1 0 372 237 A 95 95 0 1 1 275 140 Z" fill={`url(#${goldId})`} />
+
+        {/* Inner Sparkle Star */}
+        <path d="M 256 186 Q 256 256 186 256 Q 256 256 256 326 Q 256 256 326 256 Q 256 256 256 186 Z" fill={`url(#${purpleId})`} />
+        <circle cx="256" cy="256" r="12" fill="#fff" />
       </svg>
     </div>
   );

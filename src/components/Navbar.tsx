@@ -39,11 +39,8 @@ export const Navbar: React.FC = () => {
           {/* Left: Bespoke Luxury Brand Section with Fixed Alignment */}
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             {/* Handcrafted Sacred Geometry Astrolabe Emblem */}
-            <div className="sm:hidden flex flex-shrink-0">
-              <CelestialEmblem size={28} className="drop-shadow-[0_0_10px_rgba(245,158,11,0.3)]" />
-            </div>
-            <div className="hidden sm:flex flex-shrink-0">
-              <CelestialEmblem size={34} className="drop-shadow-[0_0_12px_rgba(245,158,11,0.3)]" />
+            <div className="flex flex-shrink-0">
+              <CelestialEmblem className="w-7 h-7 sm:w-8 sm:h-8 drop-shadow-[0_0_12px_rgba(245,158,11,0.3)]" />
             </div>
 
             <div className="flex flex-col justify-center min-w-0">

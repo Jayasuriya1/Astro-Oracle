@@ -12,7 +12,7 @@ const MainContent: React.FC = () => {
   const { activeView, isExportOpen, setIsExportOpen } = useAstrology();
 
   return (
-    <div className="relative z-10 flex flex-col h-full min-h-[100svh] min-h-[100dvh] overflow-hidden">
+    <div className="relative z-10 flex flex-col h-[100dvh] w-full overflow-hidden">
       <Navbar />
 
       <main className="flex-1 min-h-0 relative overflow-hidden">
@@ -67,7 +67,7 @@ const MainContent: React.FC = () => {
 export function App() {
   return (
     <AstrologyProvider>
-      <div className="h-full min-h-[100svh] min-h-[100dvh] bg-slate-950 text-slate-100 relative overflow-hidden flex flex-col selection:bg-purple-600 selection:text-white">
+      <div className="h-[100dvh] w-full bg-slate-950 text-slate-100 relative overflow-hidden flex flex-col selection:bg-purple-600 selection:text-white">
         {/* Subtle radial ambient cosmic glow */}
         <div className="fixed -top-40 -left-40 w-96 h-96 bg-purple-600/10 rounded-full blur-[128px] pointer-events-none" />
         <div className="fixed top-1/3 -right-40 w-96 h-96 bg-amber-500/10 rounded-full blur-[128px] pointer-events-none" />

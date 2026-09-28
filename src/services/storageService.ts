@@ -14,6 +14,7 @@ const KEYS = {
   API_KEY: 'astro_gemini_api_key',
   // Prefixes for per-profile isolation
   CHAT_PREFIX: 'astro_chat_',
+  SUMMARY_PREFIX: 'astro_chat_summary_',
   CHART_PREFIX: 'astro_chart_',
   // Legacy keys for migration
   LEGACY_USER_PROFILE: 'astro_user_profile',
@@ -124,6 +125,22 @@ export const storageService = {
 
   async clearChatHistory(profileId: string): Promise<void> {
     await store.removeItem(KEYS.CHAT_PREFIX + profileId);
+    await store.removeItem(KEYS.SUMMARY_PREFIX + profileId);
+  },
+
+  // Per-profile chat summary for context optimization
+  async getChatSummary(profileId: string): Promise<string> {
+    try {
+      const summary = await store.getItem<string>(KEYS.SUMMARY_PREFIX + profileId);
+      return summary || '';
+    } catch (e) {
+      console.error(`Error reading chat summary for profile ${profileId}:`, e);
+      return '';
+    }
+  },
+
+  async saveChatSummary(profileId: string, summary: string): Promise<void> {
+    await store.setItem(KEYS.SUMMARY_PREFIX + profileId, summary);
   },
 
   // Per-profile isolated astrology calculations
@@ -155,12 +172,13 @@ export const storageService = {
     await store.setItem(KEYS.API_KEY, key.trim());
   },
 
-  // Delete profile and clean up all associated chat history and calculated charts
+  // Delete profile and clean up all associated chat history, summaries, and calculated charts
   async deleteProfile(profileId: string): Promise<void> {
     const profiles = await this.getProfiles();
     const updated = profiles.filter(p => p.id !== profileId);
     await this.saveProfiles(updated);
     await store.removeItem(KEYS.CHAT_PREFIX + profileId);
+    await store.removeItem(KEYS.SUMMARY_PREFIX + profileId);
     await store.removeItem(KEYS.CHART_PREFIX + profileId);
   },
 
