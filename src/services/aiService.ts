@@ -102,35 +102,30 @@ The user has selected Tamil. Output your entire analysis, astrological interpret
 const PRIMARY_CHAT_MODELS = [
   'gemini-3.8-flash',
   'gemini-3.7-flash',
-  'gemini-3.5-flash',
-  'gemini-2.5-flash',
-  'gemini-2.0-flash',
-  'gemini-1.5-flash'
+  'gemini-3.5-flash'
 ];
 
 /**
  * Emergency Backup Lite Models (Used ONLY if all primary models are exhausted for the day)
  */
 const EMERGENCY_LITE_MODELS = [
-  'gemini-3.5-flash-lite',
-  'gemini-2.5-flash-lite'
+  'gemini-3.5-flash-lite'
 ];
 
 /**
- * Fast & Cheap Models for API Key Connection Test and Background Chat Summarization
+ * Fast & Cheap Models for API Key Connection Test
  */
 const TEST_API_KEY_MODELS = [
   'gemini-3.5-flash-lite',
-  'gemini-2.5-flash-lite',
-  'gemma-4-31b',
-  'gemma-4-26b'
+  'gemini-3.5-flash'
 ];
 
+/**
+ * Fast & Cheap Models for Background Chat Summarization
+ */
 const SUMMARIZER_MODELS = [
   'gemini-3.5-flash-lite',
-  'gemini-2.5-flash-lite',
-  'gemma-4-31b',
-  'gemma-4-26b'
+  'gemini-3.5-flash'
 ];
 
 const DAILY_MODEL_SAFE_LIMIT = 18; // Switch model before hitting hard 20 RPD free-tier cap
